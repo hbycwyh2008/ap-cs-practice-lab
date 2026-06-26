@@ -84,6 +84,9 @@ def _request(method, path, token=None, body=None):
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
             raw = resp.read().decode()
+            # Check if response is CSV
+            if path.endswith('.csv'):
+                return resp.status, raw
             return resp.status, json.loads(raw) if raw else None
     except urllib.error.HTTPError as e:
         raw = e.read().decode()
@@ -350,15 +353,28 @@ def test_teacher_analytics(teacher_token):
     assert "skill_stats" in analytics, "Missing skill_stats"
     print("  [ok] analytics structure valid")
     
-    # Validate assignment stats structure
+    # Validate assignment stats structure with new fields
     if analytics["assignment_stats"]:
         a_stat = analytics["assignment_stats"][0]
         assert "assignment_id" in a_stat
         assert "title" in a_stat
         assert "total_students" in a_stat
-        assert "submitted_students" in a_stat
+        assert "attempted_students" in a_stat, "Missing attempted_students"
+        assert "completed_students" in a_stat, "Missing completed_students"
+        assert "attempt_rate" in a_stat, "Missing attempt_rate"
         assert "completion_rate" in a_stat
-        print(f"  [ok] assignment stats: {len(analytics['assignment_stats'])} entries")
+        assert "not_completed_students" in a_stat, "Missing not_completed_students"
+        
+        # Validate not_completed_students structure
+        if a_stat["not_completed_students"]:
+            nc_student = a_stat["not_completed_students"][0]
+            assert "id" in nc_student
+            assert "display_name" in nc_student
+            assert "@" not in nc_student["display_name"], (
+                "display_name should not contain email"
+            )
+        
+        print(f"  [ok] assignment stats: {len(analytics['assignment_stats'])} entries, new fields validated")
     
     # Validate question stats structure
     if analytics["question_stats"]:
@@ -377,6 +393,33 @@ def test_teacher_analytics(teacher_token):
         assert "avg_score" in s_stat
         assert "question_count" in s_stat
         print(f"  [ok] skill stats: {len(analytics['skill_stats'])} entries")
+
+
+def test_analytics_student_403(student_token):
+    print("13. Regression: student cannot access analytics")
+    status, resp = _request("GET", "/analytics", token=student_token)
+    assert status in (401, 403), (
+        f"Expected 401/403 for student accessing analytics, got {status}: {resp}"
+    )
+    print("  [ok] analytics blocked for student")
+
+
+def test_csv_export(teacher_token):
+    print("14. Regression: CSV export endpoint")
+    status, resp = _request("GET", "/analytics/export.csv", token=teacher_token)
+    assert status == 200, f"GET /analytics/export.csv failed: {status} {resp}"
+    
+    # Response should be text, not JSON
+    assert isinstance(resp, str), f"Expected CSV text, got {type(resp)}"
+    
+    # Check CSV structure
+    assert "assignment_id" in resp, "CSV missing assignment_id header"
+    assert "assignment_title" in resp, "CSV missing assignment_title header"
+    assert "completion_rate" in resp, "CSV missing completion_rate header"
+    assert "attempted_students" in resp, "CSV missing attempted_students"
+    assert "completed_students" in resp, "CSV missing completed_students"
+    
+    print("  [ok] CSV export structure valid")
 
 
 def _find_seed_assignment(assignments):
@@ -455,6 +498,10 @@ def main():
     test_question_archive_restore(teacher_token, classes[0]["id"])
 
     test_teacher_analytics(teacher_token)
+
+    test_analytics_student_403(student_token)
+
+    test_csv_export(teacher_token)
 
     print("\nSMOKE TEST PASSED")
 

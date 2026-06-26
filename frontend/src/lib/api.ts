@@ -125,12 +125,20 @@ export interface DashboardStats {
   average_score: number | null;
 }
 
+export interface StudentLite {
+  id: number;
+  display_name: string;
+}
+
 export interface AssignmentCompletionStats {
   assignment_id: number;
   title: string;
   total_students: number;
-  submitted_students: number;
+  attempted_students: number;
+  completed_students: number;
+  attempt_rate: number;
   completion_rate: number;
+  not_completed_students: StudentLite[];
 }
 
 export interface QuestionStats {

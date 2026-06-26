@@ -305,12 +305,20 @@ class DashboardStats(BaseModel):
 
 
 # Analytics
+class StudentLite(BaseModel):
+    id: int
+    display_name: str
+
+
 class AssignmentCompletionStats(BaseModel):
     assignment_id: int
     title: str
     total_students: int
-    submitted_students: int
+    attempted_students: int
+    completed_students: int
+    attempt_rate: float
     completion_rate: float
+    not_completed_students: list[StudentLite] = []
 
 
 class QuestionStats(BaseModel):

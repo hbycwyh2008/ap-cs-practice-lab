@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select, func
 from typing import Optional
+import io
 
 from app.auth import get_current_user, require_teacher
 from app.database import get_session
@@ -17,6 +19,7 @@ from app.schemas import (
     AssignmentCompletionStats,
     QuestionStats,
     SkillStats,
+    StudentLite,
     TeacherAnalytics,
 )
 
@@ -52,25 +55,71 @@ def get_teacher_analytics(
             )
         ).one()
         
-        # Get unique students who submitted to this assignment
-        submitted_students = session.exec(
+        # Get unique students who have ANY submission (attempted)
+        attempted_students = session.exec(
             select(func.count(func.distinct(Submission.student_id)))
             .where(Submission.assignment_id == assignment.id)
         ).one()
         
-        completion_rate = (
-            round(submitted_students / student_count * 100, 1)
+        # Get unique students who have final submission (completed)
+        completed_students = session.exec(
+            select(func.count(func.distinct(Submission.student_id)))
+            .where(
+                Submission.assignment_id == assignment.id,
+                Submission.is_final == True,
+            )
+        ).one()
+        
+        attempt_rate = (
+            round(attempted_students / student_count * 100, 1)
             if student_count > 0
             else 0.0
         )
+        
+        completion_rate = (
+            round(completed_students / student_count * 100, 1)
+            if student_count > 0
+            else 0.0
+        )
+        
+        # Get students who haven't completed (no final submission)
+        completed_student_ids = set(
+            session.exec(
+                select(Submission.student_id)
+                .where(
+                    Submission.assignment_id == assignment.id,
+                    Submission.is_final == True,
+                )
+                .distinct()
+            ).all()
+        )
+        
+        all_students = session.exec(
+            select(User).where(
+                User.class_id == assignment.class_id,
+                User.role == UserRole.STUDENT,
+            )
+        ).all()
+        
+        not_completed = [
+            StudentLite(
+                id=student.id,
+                display_name=f"Student #{student.id}",
+            )
+            for student in all_students
+            if student.id not in completed_student_ids
+        ]
         
         assignment_stats.append(
             AssignmentCompletionStats(
                 assignment_id=assignment.id,
                 title=assignment.title,
                 total_students=student_count,
-                submitted_students=submitted_students,
+                attempted_students=attempted_students,
+                completed_students=completed_students,
+                attempt_rate=attempt_rate,
                 completion_rate=completion_rate,
+                not_completed_students=not_completed,
             )
         )
     
@@ -140,4 +189,76 @@ def get_teacher_analytics(
         assignment_stats=assignment_stats,
         question_stats=question_stats,
         skill_stats=skill_stats,
+    )
+
+
+@router.get("/export.csv")
+def export_analytics_csv(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_teacher),
+):
+    """Export assignment completion analytics as CSV."""
+    
+    # Get all teacher's assignments
+    assignments = session.exec(
+        select(Assignment).where(Assignment.created_by == current_user.id)
+    ).all()
+    
+    csv_lines = [
+        "assignment_id,assignment_title,total_students,attempted_students,completed_students,attempt_rate,completion_rate,not_completed_count"
+    ]
+    
+    for assignment in assignments:
+        # Get student count
+        student_count = session.exec(
+            select(func.count())
+            .select_from(User)
+            .where(
+                User.class_id == assignment.class_id,
+                User.role == UserRole.STUDENT,
+            )
+        ).one()
+        
+        # Attempted students
+        attempted_students = session.exec(
+            select(func.count(func.distinct(Submission.student_id)))
+            .where(Submission.assignment_id == assignment.id)
+        ).one()
+        
+        # Completed students (final submission)
+        completed_students = session.exec(
+            select(func.count(func.distinct(Submission.student_id)))
+            .where(
+                Submission.assignment_id == assignment.id,
+                Submission.is_final == True,
+            )
+        ).one()
+        
+        attempt_rate = (
+            round(attempted_students / student_count * 100, 1)
+            if student_count > 0
+            else 0.0
+        )
+        
+        completion_rate = (
+            round(completed_students / student_count * 100, 1)
+            if student_count > 0
+            else 0.0
+        )
+        
+        not_completed_count = student_count - completed_students
+        
+        # Escape title for CSV
+        title_escaped = assignment.title.replace('"', '""')
+        
+        csv_lines.append(
+            f'{assignment.id},"{title_escaped}",{student_count},{attempted_students},{completed_students},{attempt_rate},{completion_rate},{not_completed_count}'
+        )
+    
+    csv_content = "\n".join(csv_lines)
+    
+    return StreamingResponse(
+        io.StringIO(csv_content),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=analytics_export.csv"},
     )

@@ -228,6 +228,45 @@ Questions are **soft-deleted** (archived), never hard-deleted:
 - Teachers can restore an archived question at any time.
 - The teacher question list shows all questions with **Active** / **Archived** badges.
 
+## Milestone 3: Teacher Analytics
+
+Teachers can view comprehensive analytics to track student progress and identify areas for improvement.
+
+### Analytics Features (Milestone 3.1 - Beta Trial Readiness)
+
+**GET /analytics** returns:
+
+1. **Assignment Completion Stats**
+   - `attempted_students` — students who have any submission (practice or final)
+   - `completed_students` — students who have submitted a **final** submission
+   - `attempt_rate` — percentage of students who attempted
+   - `completion_rate` — percentage of students who completed (final submit)
+   - `not_completed_students` — list of students who haven't finalized, displayed as `Student #123` (no email)
+
+2. **Question Performance**
+   - Submission count, average score, pass rate per question
+
+3. **Skill Aggregation**
+   - Average score and question count by skill (e.g., traversal, selection)
+
+**CSV Export:**
+
+- `GET /analytics/export.csv` — download assignment completion data as CSV
+- Includes: assignment_id, title, total/attempted/completed students, rates
+
+**Privacy:**
+- Student identifiers use numeric IDs (`Student #42`) instead of emails
+- No unnecessary personal information (phone numbers, parent contacts, photos) is collected
+- Suitable for beta trial with demo or anonymized accounts
+
+### Beta Trial Best Practices
+
+During the beta trial phase:
+- Teachers should use demo student accounts (e.g., `student1@demo.edu`)
+- Avoid entering unnecessary personal information
+- Student emails are not displayed in analytics or public demos
+- See `/beta-notice` page for complete data collection and privacy information
+
 ### Question tags
 
 Each question now includes:

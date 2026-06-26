@@ -41,15 +41,44 @@ export default function DashboardPage() {
               {/* Assignment Completion */}
               {analytics.assignment_stats.length > 0 && (
                 <section>
-                  <h2 className="text-lg font-semibold mb-4">Assignment Completion Rates</h2>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold">Assignment Completion Rates</h2>
+                    <a
+                      href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/analytics/export.csv`}
+                      download="analytics_export.csv"
+                      className="text-sm px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      onClick={(e) => {
+                        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+                        if (token) {
+                          e.preventDefault();
+                          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/analytics/export.csv`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                          })
+                            .then((res) => res.blob())
+                            .then((blob) => {
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = 'analytics_export.csv';
+                              a.click();
+                            });
+                        }
+                      }}
+                    >
+                      Export CSV
+                    </a>
+                  </div>
                   <div className="bg-white rounded-lg shadow overflow-hidden">
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50 border-b">
                         <tr>
                           <th className="text-left p-3 font-medium text-gray-700">Assignment</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Students</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Submitted</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Rate</th>
+                          <th className="text-center p-3 font-medium text-gray-700">Total</th>
+                          <th className="text-center p-3 font-medium text-gray-700">Attempted</th>
+                          <th className="text-center p-3 font-medium text-gray-700">Completed</th>
+                          <th className="text-center p-3 font-medium text-gray-700">Attempt %</th>
+                          <th className="text-center p-3 font-medium text-gray-700">Complete %</th>
+                          <th className="text-center p-3 font-medium text-gray-700">Not Completed</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -61,7 +90,17 @@ export default function DashboardPage() {
                               </Link>
                             </td>
                             <td className="text-center p-3">{stat.total_students}</td>
-                            <td className="text-center p-3">{stat.submitted_students}</td>
+                            <td className="text-center p-3">{stat.attempted_students}</td>
+                            <td className="text-center p-3">{stat.completed_students}</td>
+                            <td className="text-center p-3">
+                              <span className={`font-medium ${
+                                stat.attempt_rate >= 80 ? "text-green-600" :
+                                stat.attempt_rate >= 50 ? "text-yellow-600" :
+                                "text-red-600"
+                              }`}>
+                                {stat.attempt_rate}%
+                              </span>
+                            </td>
                             <td className="text-center p-3">
                               <span className={`font-medium ${
                                 stat.completion_rate >= 80 ? "text-green-600" :
@@ -70,6 +109,16 @@ export default function DashboardPage() {
                               }`}>
                                 {stat.completion_rate}%
                               </span>
+                            </td>
+                            <td className="text-center p-3 text-sm text-gray-600">
+                              {stat.not_completed_students.length === 0 ? (
+                                <span className="text-green-600 font-medium">All completed</span>
+                              ) : (
+                                <span title={stat.not_completed_students.map(s => s.display_name).join(', ')}>
+                                  {stat.not_completed_students.slice(0, 3).map(s => s.display_name).join(', ')}
+                                  {stat.not_completed_students.length > 3 && ` +${stat.not_completed_students.length - 3} more`}
+                                </span>
+                              )}
                             </td>
                           </tr>
                         ))}
