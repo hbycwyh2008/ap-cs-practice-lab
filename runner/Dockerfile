@@ -1,10 +1,7 @@
 FROM eclipse-temurin:17-jdk-alpine
 
-RUN addgroup -S runner && adduser -S runner -G runner
-
 WORKDIR /workspace
 
-USER runner
-
-# Default entrypoint: compile and run files mounted at /workspace
+# Run as root so javac can write .class files to the bind-mounted workspace.
+# Container is still sandboxed via --network none, memory/CPU/pids limits.
 ENTRYPOINT ["/bin/sh", "-c"]
