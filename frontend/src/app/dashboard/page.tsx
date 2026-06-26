@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { api, SchoolClass, Assignment } from "@/lib/api";
+import { api, SchoolClass, Assignment, TeacherAnalytics, DashboardStats } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
@@ -27,6 +35,7 @@ import {
   AlertCircle,
   ArrowRight,
   BarChart3,
+  Download,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -34,17 +43,43 @@ export default function DashboardPage() {
   const router = useRouter();
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [analytics, setAnalytics] = useState<TeacherAnalytics | null>(null);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [loadingData, setLoadingData] = useState(true);
+
+  const handleExportCSV = async () => {
+    try {
+      const blob = await api.exportAnalyticsCSV();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `analytics_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("CSV export failed:", error);
+      alert("Failed to export CSV");
+    }
+  };
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
     }
     if (user && user.role === "teacher") {
-      Promise.all([api.getClasses(), api.getAssignments()])
-        .then(([c, a]) => {
+      Promise.all([
+        api.getClasses(),
+        api.getAssignments(),
+        api.getDashboard(),
+        api.getAnalytics()
+      ])
+        .then(([c, a, ds, an]) => {
           setClasses(c);
           setAssignments(a);
+          setDashboardStats(ds);
+          setAnalytics(an);
         })
         .finally(() => setLoadingData(false));
     } else if (user && user.role === "student") {
@@ -306,7 +341,7 @@ export default function DashboardPage() {
                                 {a.title}
                               </h3>
                               <p className="text-sm text-slate-500">
-                                Due {new Date(a.due_at).toLocaleDateString()}
+                                Due {a.due_at ? new Date(a.due_at).toLocaleDateString() : "No due date"}
                               </p>
                             </div>
                             <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all" />
@@ -318,26 +353,179 @@ export default function DashboardPage() {
                 </Card>
               </div>
 
-              {/* Analytics Quick Link */}
-              <Card className="border-2 shadow-lg bg-gradient-to-br from-indigo-50 to-purple-50">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-indigo-600" />
-                    <CardTitle>Teacher Analytics</CardTitle>
+              {/* Analytics Section */}
+              {analytics && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="w-6 h-6 text-indigo-600" />
+                      <h2 className="text-2xl font-bold text-slate-900">
+                        Teacher Analytics
+                      </h2>
+                    </div>
+                    <Button onClick={handleExportCSV} variant="outline">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export CSV
+                    </Button>
                   </div>
-                  <CardDescription>
-                    Track assignment completion and student performance
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button asChild className="w-full sm:w-auto">
-                    <Link href="/teacher/analytics">
-                      View Analytics Dashboard
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+
+                  {/* Assignment Completion Stats */}
+                  <Card className="border-2 shadow-lg">
+                    <CardHeader>
+                      <CardTitle>Assignment Completion</CardTitle>
+                      <CardDescription>
+                        Track completion rates across assignments
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {analytics.assignment_stats.length === 0 ? (
+                        <p className="text-slate-500 text-center py-4">
+                          No assignment data yet
+                        </p>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Assignment</TableHead>
+                              <TableHead>Enrolled</TableHead>
+                              <TableHead>Completed</TableHead>
+                              <TableHead>Rate</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {analytics.assignment_stats.map((stat) => (
+                              <TableRow key={stat.assignment_id}>
+                                <TableCell className="font-medium">
+                                  {stat.assignment_title}
+                                </TableCell>
+                                <TableCell>{stat.enrolled_count}</TableCell>
+                                <TableCell>{stat.completed_count}</TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={
+                                      stat.completion_rate >= 0.8
+                                        ? "default"
+                                        : stat.completion_rate >= 0.5
+                                        ? "secondary"
+                                        : "destructive"
+                                    }
+                                  >
+                                    {(stat.completion_rate * 100).toFixed(0)}%
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Question Performance Stats */}
+                  <Card className="border-2 shadow-lg">
+                    <CardHeader>
+                      <CardTitle>Question Performance</CardTitle>
+                      <CardDescription>
+                        View which questions students find most challenging
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {analytics.question_stats.length === 0 ? (
+                        <p className="text-slate-500 text-center py-4">
+                          No question data yet
+                        </p>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Question</TableHead>
+                              <TableHead>Attempts</TableHead>
+                              <TableHead>Pass Rate</TableHead>
+                              <TableHead>Avg Tests</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {analytics.question_stats.map((stat) => (
+                              <TableRow key={stat.question_id}>
+                                <TableCell className="font-medium">
+                                  {stat.question_title}
+                                </TableCell>
+                                <TableCell>{stat.attempt_count}</TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={
+                                      stat.pass_rate >= 0.7
+                                        ? "default"
+                                        : stat.pass_rate >= 0.4
+                                        ? "secondary"
+                                        : "destructive"
+                                    }
+                                  >
+                                    {(stat.pass_rate * 100).toFixed(0)}%
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {stat.avg_tests_passed.toFixed(1)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Skill Performance Stats */}
+                  <Card className="border-2 shadow-lg">
+                    <CardHeader>
+                      <CardTitle>Skill Performance</CardTitle>
+                      <CardDescription>
+                        Identify which AP CSA skills need more practice
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {analytics.skill_stats.length === 0 ? (
+                        <p className="text-slate-500 text-center py-4">
+                          No skill data yet
+                        </p>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Skill</TableHead>
+                              <TableHead>Questions</TableHead>
+                              <TableHead>Pass Rate</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {analytics.skill_stats.map((stat) => (
+                              <TableRow key={stat.skill}>
+                                <TableCell className="font-medium">
+                                  {stat.skill}
+                                </TableCell>
+                                <TableCell>{stat.question_count}</TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={
+                                      stat.pass_rate >= 0.7
+                                        ? "default"
+                                        : stat.pass_rate >= 0.4
+                                        ? "secondary"
+                                        : "destructive"
+                                    }
+                                  >
+                                    {(stat.pass_rate * 100).toFixed(0)}%
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </>
           )}
 
@@ -402,7 +590,7 @@ export default function DashboardPage() {
                   ) : (
                     <div className="space-y-4">
                       {assignments.map((a) => {
-                        const isOverdue = new Date(a.due_at) < new Date();
+                        const isOverdue = a.due_at ? new Date(a.due_at) < new Date() : false;
 
                         return (
                           <Link
@@ -420,7 +608,7 @@ export default function DashboardPage() {
                             </div>
                             <div className="flex items-center gap-4">
                               <Badge variant={isOverdue ? "destructive" : "secondary"}>
-                                Due {new Date(a.due_at).toLocaleDateString()}
+                                Due {a.due_at ? new Date(a.due_at).toLocaleDateString() : "No due date"}
                               </Badge>
                             </div>
                           </Link>
