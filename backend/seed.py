@@ -25,6 +25,16 @@ STARTER_CODE = """public class Solution {
     }
 }"""
 
+TEACHER_NAME = "Demo Teacher"
+TEACHER_EMAIL = "teacher@example.com"
+TEACHER_PASSWORD = "password123"
+STUDENT_NAME = "Demo Student"
+STUDENT_EMAIL = "student@example.com"
+STUDENT_PASSWORD = "password123"
+DEFAULT_CLASS_NAME = "AP CSA Period 1"
+DEFAULT_SCHOOL_YEAR = "2026-2027"
+DEFAULT_ASSIGNMENT_TITLE = "Array Traversal Practice"
+
 DEFAULT_TEST_CASES = [
     ("basic case A", {"nums": [1, 2, 3]}, "0", False, 2),
     ("basic case B", {"nums": [5, 1, 4]}, "0", False, 2),
@@ -184,29 +194,18 @@ QUESTIONS = [
 ]
 
 
-def _add_question(session, teacher_id, spec):
-    question = Question(
-        title=spec["title"],
-        unit=spec["unit"],
-        topic=spec["topic"],
-        skill=spec["skill"],
-        difficulty=spec["difficulty"],
-        prompt=spec["prompt"],
-        starter_code=STARTER_CODE,
-        reference_solution=spec["reference_solution"],
-        max_points=10,
-        estimated_minutes=10,
-        source="original",
-        is_active=True,
-        created_by=teacher_id,
-    )
-    session.add(question)
+def _sync_test_cases(session, question_id, test_cases):
+    existing_test_cases = session.exec(
+        select(TestCase).where(TestCase.question_id == question_id)
+    ).all()
+    for tc in existing_test_cases:
+        session.delete(tc)
     session.commit()
-    session.refresh(question)
 
-    for name, inp, expected, hidden, points in spec["test_cases"]:
+    created = 0
+    for name, inp, expected, hidden, points in test_cases:
         tc = TestCase(
-            question_id=question.id,
+            question_id=question_id,
             name=name,
             input_json=json.dumps(inp),
             expected_output=expected,
@@ -214,7 +213,51 @@ def _add_question(session, teacher_id, spec):
             points=points,
         )
         session.add(tc)
+        created += 1
     session.commit()
+    return created
+
+
+def _upsert_question(session, teacher_id, spec):
+    question = session.exec(
+        select(Question).where(
+            Question.created_by == teacher_id,
+            Question.title == spec["title"],
+        )
+    ).first()
+    if not question:
+        question = Question(
+            title=spec["title"],
+            unit=spec["unit"],
+            topic=spec["topic"],
+            skill=spec["skill"],
+            difficulty=spec["difficulty"],
+            prompt=spec["prompt"],
+            starter_code=STARTER_CODE,
+            reference_solution=spec["reference_solution"],
+            max_points=10,
+            estimated_minutes=10,
+            source="original",
+            is_active=True,
+            created_by=teacher_id,
+        )
+    else:
+        question.unit = spec["unit"]
+        question.topic = spec["topic"]
+        question.skill = spec["skill"]
+        question.difficulty = spec["difficulty"]
+        question.prompt = spec["prompt"]
+        question.starter_code = STARTER_CODE
+        question.reference_solution = spec["reference_solution"]
+        question.max_points = 10
+        question.estimated_minutes = 10
+        question.source = "original"
+        question.is_active = True
+    session.add(question)
+    session.commit()
+    session.refresh(question)
+
+    _sync_test_cases(session, question.id, spec["test_cases"])
     return question
 
 
@@ -222,69 +265,106 @@ def seed():
     create_db_and_tables()
 
     with Session(engine) as session:
-        existing = session.exec(
-            select(User).where(User.email == "teacher@example.com")
-        ).first()
-        if existing:
-            print("Database already seeded. Skipping.")
-            return
-
-        teacher = User(
-            name="Demo Teacher",
-            email="teacher@example.com",
-            password_hash=get_password_hash("password123"),
-            role=UserRole.TEACHER,
-        )
+        teacher = session.exec(select(User).where(User.email == TEACHER_EMAIL)).first()
+        if not teacher:
+            teacher = User(
+                name=TEACHER_NAME,
+                email=TEACHER_EMAIL,
+                password_hash=get_password_hash(TEACHER_PASSWORD),
+                role=UserRole.TEACHER,
+            )
+        else:
+            teacher.name = TEACHER_NAME
+            teacher.role = UserRole.TEACHER
+            teacher.password_hash = get_password_hash(TEACHER_PASSWORD)
+            teacher.class_id = None
         session.add(teacher)
         session.commit()
         session.refresh(teacher)
 
-        school_class = SchoolClass(
-            name="AP CSA Period 1",
-            school_year="2026-2027",
-            teacher_id=teacher.id,
-        )
+        school_class = session.exec(
+            select(SchoolClass).where(
+                SchoolClass.teacher_id == teacher.id,
+                SchoolClass.name == DEFAULT_CLASS_NAME,
+            )
+        ).first()
+        if not school_class:
+            school_class = SchoolClass(
+                name=DEFAULT_CLASS_NAME,
+                school_year=DEFAULT_SCHOOL_YEAR,
+                teacher_id=teacher.id,
+            )
+        else:
+            school_class.school_year = DEFAULT_SCHOOL_YEAR
         session.add(school_class)
         session.commit()
         session.refresh(school_class)
 
-        student = User(
-            name="Demo Student",
-            email="student@example.com",
-            password_hash=get_password_hash("password123"),
-            role=UserRole.STUDENT,
-            class_id=school_class.id,
-        )
+        student = session.exec(select(User).where(User.email == STUDENT_EMAIL)).first()
+        if not student:
+            student = User(
+                name=STUDENT_NAME,
+                email=STUDENT_EMAIL,
+                password_hash=get_password_hash(STUDENT_PASSWORD),
+                role=UserRole.STUDENT,
+                class_id=school_class.id,
+            )
+        else:
+            student.name = STUDENT_NAME
+            student.role = UserRole.STUDENT
+            student.class_id = school_class.id
+            student.password_hash = get_password_hash(STUDENT_PASSWORD)
         session.add(student)
         session.commit()
         session.refresh(student)
 
-        questions = [_add_question(session, teacher.id, spec) for spec in QUESTIONS]
+        questions = [_upsert_question(session, teacher.id, spec) for spec in QUESTIONS]
         first_question = questions[0]
 
-        assignment = Assignment(
-            title="Array Traversal Practice",
-            description="Practice traversing arrays with FRQ problems.",
-            class_id=school_class.id,
-            created_by=teacher.id,
-            due_at=datetime.utcnow() + timedelta(days=7),
-        )
+        assignment = session.exec(
+            select(Assignment).where(
+                Assignment.created_by == teacher.id,
+                Assignment.class_id == school_class.id,
+                Assignment.title == DEFAULT_ASSIGNMENT_TITLE,
+            )
+        ).first()
+        if not assignment:
+            assignment = Assignment(
+                title=DEFAULT_ASSIGNMENT_TITLE,
+                description="Practice traversing arrays with FRQ problems.",
+                class_id=school_class.id,
+                created_by=teacher.id,
+                due_at=datetime.utcnow() + timedelta(days=7),
+            )
+        else:
+            assignment.description = "Practice traversing arrays with FRQ problems."
+            assignment.due_at = datetime.utcnow() + timedelta(days=7)
         session.add(assignment)
         session.commit()
         session.refresh(assignment)
 
-        aq = AssignmentQuestion(
-            assignment_id=assignment.id,
-            question_id=first_question.id,
-            order=1,
-            points=10,
-        )
-        session.add(aq)
+        assignment_link = session.exec(
+            select(AssignmentQuestion).where(
+                AssignmentQuestion.assignment_id == assignment.id,
+                AssignmentQuestion.question_id == first_question.id,
+            )
+        ).first()
+        if not assignment_link:
+            assignment_link = AssignmentQuestion(
+                assignment_id=assignment.id,
+                question_id=first_question.id,
+                order=1,
+                points=10,
+            )
+        else:
+            assignment_link.order = 1
+            assignment_link.points = 10
+        session.add(assignment_link)
         session.commit()
 
         print("Seed completed successfully!")
-        print(f"  Teacher: teacher@example.com / password123")
-        print(f"  Student: student@example.com / password123")
+        print(f"  Teacher: {TEACHER_EMAIL} / {TEACHER_PASSWORD}")
+        print(f"  Student: {STUDENT_EMAIL} / {STUDENT_PASSWORD}")
         print(f"  Class: {school_class.name}")
         print(f"  Questions: {len(questions)}")
         print(f"  Assignment: {assignment.title}")
