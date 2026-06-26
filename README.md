@@ -495,6 +495,77 @@ For demonstrating the platform to potential users, see [Beta Demo Flow](docs/BET
 - **Backup:** Regular PostgreSQL database backups recommended
 - **Rollback:** Keep previous Docker images for quick rollback
 
+## Milestone 3.5: Public Demo Polish
+
+**UI/UX improvements** for public demonstrations, beta teacher recruitment, and social media content.
+
+### Landing Page
+
+Redesigned homepage (`/`) with clear value proposition:
+- Platform overview and features
+- Current beta scope (AP CSA only, no AI feedback yet)
+- Teacher and student workflow explanations
+- Privacy-first beta trial messaging
+- Quick links to login and beta notice
+
+### Login Page Enhancements
+
+Demo account guidance displayed prominently:
+- **Teacher Demo:** `teacher@example.com` / `password123`
+- **Student Demo:** `student@example.com` / `password123`
+- Beta trial badge
+- Privacy warning: "Do not use real student data in public demos or screenshots"
+
+### Dashboard Demo Flow
+
+Teacher dashboard includes a **Beta Demo Flow** card with step-by-step guidance:
+1. Create or open a class
+2. Bulk-create anonymized students
+3. Create or auto-generate an assignment
+4. Ask students to run public tests and submit
+5. Review analytics and export CSV
+
+Quick links to Classes, Assignments, and Beta Notice pages.
+
+### Demo Content Creation
+
+**[Xiaohongshu Demo Script](docs/XIAOHONGSHU_DEMO_SCRIPT.md)** - Complete guide for creating public demo videos:
+- 60-second demo script (Chinese & English)
+- Video title ideas for social media
+- Privacy checklist before recording
+- Suggested captions and hashtags
+- Post-production checklist
+- Engagement tips and follow-up content ideas
+
+### Privacy-First Public Demos
+
+**Critical guidelines for screenshots and recordings:**
+- ✅ Use demo accounts only (`teacher@example.com`, `student@example.com`)
+- ✅ Use anonymized student accounts (`student-001@class-X.demo`)
+- ❌ Do not show real student names or emails
+- ❌ Do not show tokens, env files, or SECRET_KEY
+- ❌ Do not show school internal data
+- ❌ Do not show AP exam real questions
+
+### Target Audience
+
+- AP CSA / Java teachers in international schools
+- CS educators evaluating auto-grading tools
+- EdTech enthusiasts and open-source contributors
+- Beta trial participants
+
+### Quick Demo Flow
+
+For a 60-second demo video:
+1. **0-5s:** Pain point (manual grading is tedious)
+2. **5-15s:** Teacher dashboard overview
+3. **15-25s:** Auto-generate assignment
+4. **25-40s:** Student submission and auto-grading
+5. **40-50s:** Teacher analytics and CSV export
+6. **50-60s:** Beta trial invitation
+
+See [XIAOHONGSHU_DEMO_SCRIPT.md](docs/XIAOHONGSHU_DEMO_SCRIPT.md) for detailed script.
+
 ### Question tags
 
 Each question now includes:

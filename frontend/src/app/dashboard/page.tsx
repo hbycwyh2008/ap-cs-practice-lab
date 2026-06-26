@@ -30,6 +30,38 @@ export default function DashboardPage() {
 
       {user.role === "teacher" && stats && (
         <>
+          {/* Beta Demo Flow Card */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Beta Demo Flow</h2>
+            <ol className="space-y-2 text-sm text-gray-700 mb-4">
+              <li>1. Create or open a class</li>
+              <li>2. Bulk-create anonymized students</li>
+              <li>3. Create or auto-generate an assignment</li>
+              <li>4. Ask students to run public tests and submit final answers</li>
+              <li>5. Review analytics and export CSV</li>
+            </ol>
+            <div className="flex gap-3 flex-wrap">
+              <Link
+                href="/teacher/classes"
+                className="text-sm px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Classes
+              </Link>
+              <Link
+                href="/teacher/assignments"
+                className="text-sm px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+              >
+                Assignments
+              </Link>
+              <Link
+                href="/beta-notice"
+                className="text-sm px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              >
+                Beta Notice
+              </Link>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <StatCard label="Classes" value={stats.class_count} href="/teacher/classes" />
             <StatCard label="Questions" value={stats.question_count} href="/teacher/questions" />
