@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: apcs
+      POSTGRES_PASSWORD: apcs_secret
+      POSTGRES_DB: ap_cs_practice
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apcs -d ap_cs_practice"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://apcs:apcs_secret@postgres:5432/ap_cs_practice
+      SECRET_KEY: dev-secret-key-change-in-production
+      JAVA_RUNNER_IMAGE: ap-cs-java-runner
+      JAVA_RUNNER_MEMORY: 256m
+      JAVA_RUNNER_CPUS: "0.5"
+      JAVA_RUNNER_TIMEOUT: "5"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - runner_tmp:/tmp/java-runs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  runner_tmp:
