@@ -56,6 +56,19 @@ export interface SchoolClass {
   student_count?: number;
 }
 
+export interface StudentAccountInfo {
+  id: number;
+  name: string;
+  email: string;
+  temporary_password: string;
+  class_id: number;
+}
+
+export interface BulkCreateStudentsResponse {
+  created: StudentAccountInfo[];
+  count: number;
+}
+
 export interface Assignment {
   id: number;
   title: string;
@@ -212,8 +225,14 @@ export const api = {
   getAnalytics: () => request<TeacherAnalytics>("/analytics"),
 
   getClasses: () => request<SchoolClass[]>("/classes"),
+  getClass: (id: number) => request<SchoolClass>(`/classes/${id}`),
   createClass: (data: { name: string; school_year: string }) =>
     request<SchoolClass>("/classes", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  bulkCreateStudents: (classId: number, data: { count: number; prefix?: string }) =>
+    request<BulkCreateStudentsResponse>(`/classes/${classId}/students/bulk-create`, {
       method: "POST",
       body: JSON.stringify(data),
     }),

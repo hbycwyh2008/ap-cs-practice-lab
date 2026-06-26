@@ -267,6 +267,68 @@ During the beta trial phase:
 - Student emails are not displayed in analytics or public demos
 - See `/beta-notice` page for complete data collection and privacy information
 
+## Milestone 3.2: Beta Onboarding
+
+**Anonymized Student Accounts** for beta trial without collecting real student data.
+
+### Bulk Create Students
+
+**POST /classes/{class_id}/students/bulk-create**
+
+```json
+{
+  "count": 10,
+  "prefix": "student"
+}
+```
+
+Response:
+```json
+{
+  "created": [
+    {
+      "id": 123,
+      "name": "Student #1",
+      "email": "student-001@class-1.demo",
+      "temporary_password": "aBc12Xyz",
+      "class_id": 1
+    }
+  ],
+  "count": 10
+}
+```
+
+**Important:**
+- Temporary passwords are shown **only once** during creation
+- Teachers should copy/save credentials immediately
+- Use for beta trial with anonymized accounts
+- Accounts use demo emails like `student-001@class-1.demo`
+
+### Export Student List
+
+**GET /classes/{class_id}/students/export.csv**
+
+Downloads student roster as CSV (excludes passwords).
+
+### Beta Trial Recommendations
+
+✅ **Do:**
+- Use bulk-created anonymized accounts
+- Demo emails (e.g., `student-001@class-1.demo`)
+- Copy temporary passwords immediately after creation
+
+❌ **Don't:**
+- Collect real student emails during beta
+- Show student emails in screenshots/demos
+- Use teacher registration in production (enable only for local dev)
+
+### Security
+
+- `/auth/register` is for **local development only**
+- Production beta should disable public teacher registration
+- Teachers verified manually before account creation
+- Students created only by their class teacher
+
 ### Question tags
 
 Each question now includes:

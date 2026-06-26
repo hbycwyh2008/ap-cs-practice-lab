@@ -422,6 +422,91 @@ def test_csv_export(teacher_token):
     print("  [ok] CSV export structure valid")
 
 
+def test_bulk_create_students(teacher_token, student_token):
+    print("15. Regression: bulk-create anonymized students")
+    
+    # Teacher creates a temporary class
+    status, new_class = _request(
+        "POST",
+        "/classes",
+        token=teacher_token,
+        body={
+            "name": "Smoke Test Beta Class",
+            "school_year": "2026-2027",
+        },
+    )
+    assert status == 200, f"POST /classes failed: {status} {new_class}"
+    class_id = new_class["id"]
+    print(f"  [ok] created temporary class id={class_id}")
+    
+    # Teacher bulk-creates 2 students
+    status, result = _request(
+        "POST",
+        f"/classes/{class_id}/students/bulk-create",
+        token=teacher_token,
+        body={"count": 2, "prefix": "teststu"},
+    )
+    assert status == 200, f"bulk-create failed: {status} {result}"
+    assert "created" in result
+    assert "count" in result
+    assert result["count"] == 2, f"Expected 2 students, got {result['count']}"
+    
+    created = result["created"]
+    assert len(created) == 2, f"Expected 2 accounts, got {len(created)}"
+    
+    # Validate account structure
+    account1 = created[0]
+    assert "id" in account1
+    assert "name" in account1
+    assert "email" in account1
+    assert "temporary_password" in account1
+    assert "class_id" in account1
+    assert account1["class_id"] == class_id
+    assert "@class-" in account1["email"], f"Email should contain @class-: {account1['email']}"
+    
+    print(f"  [ok] created 2 accounts: {account1['email']}, {created[1]['email']}")
+    
+    # Try logging in with first new student
+    status, login_resp = _request(
+        "POST",
+        "/auth/login/json",
+        body={
+            "email": account1["email"],
+            "password": account1["temporary_password"],
+        },
+    )
+    assert status == 200, f"Login with new student failed: {status} {login_resp}"
+    assert "access_token" in login_resp
+    print(f"  [ok] new student login successful")
+    
+    # Student cannot bulk-create
+    status, resp = _request(
+        "POST",
+        f"/classes/{class_id}/students/bulk-create",
+        token=student_token,
+        body={"count": 1},
+    )
+    assert status in (401, 403), (
+        f"Expected 401/403 for student bulk-create, got {status}: {resp}"
+    )
+    print("  [ok] student bulk-create blocked")
+    
+    # Teacher exports student CSV
+    status, csv_resp = _request(
+        "GET",
+        f"/classes/{class_id}/students/export.csv",
+        token=teacher_token,
+    )
+    assert status == 200, f"CSV export failed: {status} {csv_resp}"
+    assert isinstance(csv_resp, str), f"Expected CSV text, got {type(csv_resp)}"
+    assert "student_id,name,email,class_id" in csv_resp, (
+        "CSV missing required headers"
+    )
+    assert account1["email"] in csv_resp, "CSV missing created student"
+    assert "temporary_password" not in csv_resp, "CSV should not contain passwords"
+    print("  [ok] student CSV export valid")
+
+
 def _find_seed_assignment(assignments):
     for a in assignments:
         if a.get("title") == "Array Traversal Practice":
@@ -502,6 +587,8 @@ def main():
     test_analytics_student_403(student_token)
 
     test_csv_export(teacher_token)
+
+    test_bulk_create_students(teacher_token, student_token)
 
     print("\nSMOKE TEST PASSED")
 

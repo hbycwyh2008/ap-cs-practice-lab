@@ -64,6 +64,24 @@ class ClassDetail(ClassRead):
     student_count: int = 0
 
 
+class BulkCreateStudentsRequest(BaseModel):
+    count: int
+    prefix: str = "student"
+
+
+class StudentAccountInfo(BaseModel):
+    id: int
+    name: str
+    email: str
+    temporary_password: str
+    class_id: int
+
+
+class BulkCreateStudentsResponse(BaseModel):
+    created: list[StudentAccountInfo]
+    count: int
+
+
 # Questions
 class QuestionCreate(BaseModel):
     title: str
