@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, StrictBool, field_validator
 
 from app.models import (
     Course,
@@ -180,6 +180,77 @@ class TestCaseStudentRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ImportedTestCase(BaseModel):
+    name: str
+    input_json: str
+    expected_output: str
+    points: int
+    hidden: StrictBool
+
+    @field_validator("name", "input_json", "expected_output")
+    @classmethod
+    def required_text(cls, value: str) -> str:
+        if not value or not value.strip():
+            raise ValueError("field is required")
+        return value
+
+    @field_validator("points")
+    @classmethod
+    def positive_points(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("points must be positive")
+        return value
+
+
+class ImportedQuestion(BaseModel):
+    title: str
+    description: str
+    course: str = "AP_CSA"
+    unit: str
+    topic: Optional[str] = None
+    skill: Optional[str] = None
+    difficulty: str
+    starter_code: str
+    method_signature: str
+    estimated_minutes: int = 10
+    source: Optional[str] = "structured-import"
+    reference_solution: Optional[str] = None
+    test_cases: list[ImportedTestCase]
+
+    @field_validator(
+        "title",
+        "description",
+        "unit",
+        "difficulty",
+        "starter_code",
+        "method_signature",
+    )
+    @classmethod
+    def required_text(cls, value: str) -> str:
+        if not value or not value.strip():
+            raise ValueError("field is required")
+        return value
+
+    @field_validator("estimated_minutes")
+    @classmethod
+    def positive_estimated_minutes(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("estimated_minutes must be positive")
+        return value
+
+    @field_validator("test_cases")
+    @classmethod
+    def require_test_cases(cls, value: list[ImportedTestCase]) -> list[ImportedTestCase]:
+        if not value:
+            raise ValueError("at least one test case is required")
+        return value
+
+
+class QuestionImportResponse(BaseModel):
+    imported_count: int
+    question_ids: list[int]
 
 
 # Assignments

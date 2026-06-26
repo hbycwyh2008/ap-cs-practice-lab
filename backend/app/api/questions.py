@@ -3,10 +3,89 @@ from sqlmodel import Session, select
 
 from app.auth import get_current_user, require_teacher
 from app.database import get_session
-from app.models import Assignment, AssignmentQuestion, Question, User, UserRole
-from app.schemas import QuestionCreate, QuestionRead, QuestionUpdate
+from app.models import (
+    Assignment,
+    AssignmentQuestion,
+    Course,
+    Difficulty,
+    Question,
+    TestCase,
+    User,
+    UserRole,
+)
+from app.schemas import (
+    ImportedQuestion,
+    QuestionCreate,
+    QuestionImportResponse,
+    QuestionRead,
+    QuestionUpdate,
+)
 
 router = APIRouter(prefix="/questions", tags=["questions"])
+
+
+def _normalize_course(value: str) -> Course:
+    normalized = value.strip().upper().replace(" ", "_")
+    if normalized in {"AP_CSA", "APCSA"}:
+        return Course.AP_CSA
+    raise ValueError("course must be AP_CSA or AP CSA")
+
+
+def _normalize_difficulty(value: str) -> Difficulty:
+    normalized = value.strip().lower()
+    try:
+        return Difficulty(normalized)
+    except ValueError as exc:
+        allowed = ", ".join(d.value for d in Difficulty)
+        raise ValueError(f"difficulty must be one of: {allowed}") from exc
+
+
+def _prompt_with_signature(description: str, method_signature: str) -> str:
+    return (
+        f"{description.strip()}\n\n"
+        f"Required method signature:\n{method_signature.strip()}"
+    )
+
+
+def _validate_import_batch(data: list[ImportedQuestion]) -> list[dict]:
+    if not data:
+        raise HTTPException(
+            status_code=400,
+            detail=["Import requires at least one question"],
+        )
+
+    errors: list[str] = []
+    normalized: list[dict] = []
+    for index, item in enumerate(data):
+        label = f"question {index + 1}"
+        try:
+            course = _normalize_course(item.course)
+        except ValueError as exc:
+            errors.append(f"{label}: {exc}")
+            course = Course.AP_CSA
+
+        try:
+            difficulty = _normalize_difficulty(item.difficulty)
+        except ValueError as exc:
+            errors.append(f"{label}: {exc}")
+            difficulty = Difficulty.EASY
+
+        topic = (item.topic or item.skill or item.unit).strip()
+        max_points = sum(test_case.points for test_case in item.test_cases)
+        normalized.append(
+            {
+                "question": item,
+                "course": course,
+                "difficulty": difficulty,
+                "topic": topic,
+                "max_points": max_points,
+            }
+        )
+
+    if errors:
+        raise HTTPException(status_code=400, detail=errors)
+
+    return normalized
 
 
 def _student_assigned_question_ids(session: Session, user: User) -> set[int]:
@@ -61,6 +140,69 @@ def create_question(
     session.commit()
     session.refresh(question)
     return question
+
+
+@router.post("/import", response_model=QuestionImportResponse)
+def import_questions(
+    data: list[ImportedQuestion],
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_teacher),
+):
+    normalized_questions = _validate_import_batch(data)
+    created_questions: list[Question] = []
+
+    try:
+        for normalized in normalized_questions:
+            item: ImportedQuestion = normalized["question"]
+            question = Question(
+                title=item.title.strip(),
+                course=normalized["course"],
+                unit=item.unit.strip(),
+                topic=normalized["topic"],
+                difficulty=normalized["difficulty"],
+                prompt=_prompt_with_signature(
+                    item.description,
+                    item.method_signature,
+                ),
+                starter_code=item.starter_code,
+                reference_solution=item.reference_solution,
+                max_points=normalized["max_points"],
+                skill=item.skill,
+                estimated_minutes=item.estimated_minutes,
+                source=item.source,
+                created_by=current_user.id,
+            )
+            session.add(question)
+            session.flush()
+
+            for imported_case in item.test_cases:
+                test_case = TestCase(
+                    question_id=question.id,
+                    name=imported_case.name.strip(),
+                    input_json=imported_case.input_json,
+                    expected_output=imported_case.expected_output,
+                    is_hidden=imported_case.hidden,
+                    points=imported_case.points,
+                )
+                session.add(test_case)
+
+            created_questions.append(question)
+
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+
+    question_ids: list[int] = []
+    for question in created_questions:
+        session.refresh(question)
+        if question.id is not None:
+            question_ids.append(question.id)
+
+    return QuestionImportResponse(
+        imported_count=len(question_ids),
+        question_ids=question_ids,
+    )
 
 
 @router.get("/{question_id}", response_model=QuestionRead)

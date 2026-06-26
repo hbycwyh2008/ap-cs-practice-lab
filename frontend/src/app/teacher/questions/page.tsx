@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Plus, Archive, ArchiveRestore } from "lucide-react";
+import { BookOpen, Plus, Archive, ArchiveRestore, Upload } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 
@@ -80,12 +80,20 @@ export default function TeacherQuestionsPage() {
           description="Manage your AP CSA Free Response Questions"
           icon={BookOpen}
           action={
-            <Button asChild>
-              <Link href="/teacher/questions/new">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Question
-              </Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" asChild>
+                <Link href="/teacher/questions/import">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import Questions
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/teacher/questions/new">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Question
+                </Link>
+              </Button>
+            </div>
           }
         />
 

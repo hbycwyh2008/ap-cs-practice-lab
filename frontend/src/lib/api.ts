@@ -47,6 +47,35 @@ export interface TestCase {
   created_at: string;
 }
 
+export interface ImportedTestCase {
+  name: string;
+  input_json: string;
+  expected_output: string;
+  points: number;
+  hidden: boolean;
+}
+
+export interface ImportedQuestion {
+  title: string;
+  description: string;
+  course?: string;
+  unit: string;
+  topic?: string;
+  skill?: string;
+  difficulty: string;
+  starter_code: string;
+  method_signature: string;
+  estimated_minutes?: number;
+  source?: string;
+  reference_solution?: string | null;
+  test_cases: ImportedTestCase[];
+}
+
+export interface QuestionImportResponse {
+  imported_count: number;
+  question_ids: number[];
+}
+
 export interface SchoolClass {
   id: number;
   name: string;
@@ -250,6 +279,11 @@ export const api = {
   getQuestion: (id: number) => request<Question>(`/questions/${id}`),
   createQuestion: (data: Partial<Question>) =>
     request<Question>("/questions", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  importQuestions: (data: ImportedQuestion[]) =>
+    request<QuestionImportResponse>("/questions/import", {
       method: "POST",
       body: JSON.stringify(data),
     }),
