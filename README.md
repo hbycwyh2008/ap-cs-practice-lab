@@ -566,6 +566,109 @@ For a 60-second demo video:
 
 See [XIAOHONGSHU_DEMO_SCRIPT.md](docs/XIAOHONGSHU_DEMO_SCRIPT.md) for detailed script.
 
+## Milestone 3.6: Beta Invite Package
+
+**Comprehensive documentation** for beta trial recruitment, teacher onboarding, and feedback collection.
+
+### Beta Trial Documentation
+
+Complete package for small-scale beta testing with AP CSA teachers:
+
+- **[Beta Trial Invitation](docs/BETA_TRIAL_INVITE.md)** - Comprehensive invitation document
+  - Platform overview and features
+  - Target audience and ideal participants
+  - Current beta scope and limitations
+  - Privacy expectations and data handling
+  - Beta benefits and post-beta roadmap
+  - Contact information and selection criteria
+  
+- **[Beta Trial Teacher Guide](docs/BETA_TRIAL_TEACHER_GUIDE.md)** - Step-by-step operational guide
+  - 12-step walkthrough from login to feedback
+  - Creating classes and bulk-creating students
+  - Assignment creation (manual and auto-generate)
+  - Student submission workflow
+  - Dashboard analytics and CSV export
+  - Troubleshooting common issues
+  - Important reminders and tips
+
+- **[Beta Trial Feedback Form](docs/BETA_TRIAL_FEEDBACK_FORM.md)** - Structured feedback collection
+  - 45 questions across 10 sections
+  - Platform usability assessment
+  - Auto-grading effectiveness
+  - Teacher analytics value
+  - Privacy and beta experience
+  - Open-ended improvement suggestions
+  - Ready to copy into Google Forms / 腾讯问卷 / Feishu Forms
+
+- **[Xiaohongshu Beta Post](docs/XIAOHONGSHU_BETA_POST.md)** - Social media recruitment content
+  - 5 title options for Chinese social media
+  - Professional and casual content versions
+  - Comment management templates
+  - DM response templates
+  - Privacy checklist and hashtag strategy
+  - Risk management and legal considerations
+
+### Beta Trial Parameters
+
+**Recommended Scale:**
+- 3-5 teachers
+- 5-20 students per teacher
+- 2-4 weeks duration
+- 1-2 Java Array assignments
+
+**Privacy-First Approach:**
+- Anonymized student accounts (`student-001@class-X.demo`)
+- No real student personal information collected
+- Transparent data handling during beta
+- Clear privacy guidelines in all documentation
+
+### Feedback Collection
+
+**Structured Feedback Form includes:**
+- Platform usability (login, class creation, assignments)
+- Auto-grading effectiveness (public/hidden tests)
+- Teacher analytics value (completion rates, question performance)
+- Privacy and beta experience
+- Feature prioritization for post-beta roadmap
+- Net Promoter Score (would recommend to colleagues?)
+
+**Qualitative Feedback:**
+- Biggest pain points
+- Most/least useful features
+- Feature requests
+- Student informal feedback
+- Technical issues encountered
+
+### Social Media Recruitment
+
+**Xiaohongshu (小红书) Strategy:**
+- Clear, honest positioning (beta trial, not production)
+- Privacy-first messaging (anonymized accounts)
+- No exaggerated claims (auto-grading, not AI magic)
+- Target: AP CSA / Java teachers in international schools
+- Emphasis on small-scale, free beta with genuine feedback request
+
+**Key Messages:**
+- Small-scale beta (3-5 teachers)
+- Free during beta period
+- Privacy protection with anonymized accounts
+- Open-source transparency
+- Focused on AP CSA Java FRQs only
+
+### Contact & Selection
+
+**Beta Trial Recruitment:**
+- By invitation or application
+- Selection criteria: commitment to feedback, willingness to use anonymized accounts
+- Support provided throughout trial
+- Post-trial data handling clearly communicated
+
+**Timeline:**
+- Applications reviewed on rolling basis
+- Selected teachers notified within 1 week
+- Beta trial begins upon teacher confirmation
+- Feedback due within 1 week of trial completion
+
 ### Question tags
 
 Each question now includes:
