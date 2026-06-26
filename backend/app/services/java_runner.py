@@ -72,6 +72,8 @@ def _run_docker_command(work_dir: str, shell_cmd: str, timeout: int) -> tuple[in
         settings.java_runner_memory,
         "--cpus",
         settings.java_runner_cpus,
+        "--pids-limit",
+        str(settings.java_runner_pids_limit),
         "-v",
         f"{abs_work_dir}:/workspace:rw",
         "-w",
@@ -157,14 +159,14 @@ def run_tests(
     test_cases: list[TestCase],
     include_hidden: bool = False,
     show_expected_for_teacher: bool = False,
-) -> FeedbackJson:
+) -> tuple[FeedbackJson, str, str]:
     """
     Run student code against test cases in an isolated Docker sandbox.
 
     Each test case gets its own temp directory that is cleaned up after execution.
     """
     if not test_cases:
-        return FeedbackJson(
+        empty = FeedbackJson(
             compiled=True,
             total_tests=0,
             passed_tests=0,
@@ -172,6 +174,7 @@ def run_tests(
             max_score=0,
             tests=[],
         )
+        return empty, "", ""
 
     cases_to_run = test_cases if include_hidden else [tc for tc in test_cases if not tc.is_hidden]
     max_score = sum(tc.points for tc in test_cases)
@@ -205,7 +208,7 @@ def run_tests(
 
         ok, compile_output = compile_java(work_dir)
         if not ok:
-            return FeedbackJson(
+            failed = FeedbackJson(
                 compiled=False,
                 total_tests=len(cases_to_run),
                 passed_tests=0,
@@ -223,6 +226,7 @@ def run_tests(
                     for tc in cases_to_run
                 ],
             )
+            return failed, compile_output, ""
 
         for tc in cases_to_run:
             # Regenerate Main.java for each test case
@@ -296,13 +300,17 @@ def run_tests(
         if os.path.exists(work_dir):
             shutil.rmtree(work_dir, ignore_errors=True)
 
-    return FeedbackJson(
-        compiled=compiled,
-        total_tests=len(cases_to_run),
-        passed_tests=passed_count,
-        score=total_score,
-        max_score=max_score,
-        tests=results,
+    return (
+        FeedbackJson(
+            compiled=compiled,
+            total_tests=len(cases_to_run),
+            passed_tests=passed_count,
+            score=total_score,
+            max_score=max_score,
+            tests=results,
+        ),
+        compile_output,
+        runtime_output,
     )
 
 

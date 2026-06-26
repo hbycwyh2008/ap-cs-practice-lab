@@ -227,7 +227,14 @@ export const api = {
     code: string;
     public_only?: boolean;
   }) =>
-    request<{ feedback: Feedback; score: number; max_score: number; status: string }>(
+    request<{
+      feedback: Feedback;
+      score: number;
+      max_score: number;
+      status: string;
+      compile_output: string;
+      runtime_output: string;
+    }>(
       "/submissions/run",
       { method: "POST", body: JSON.stringify({ ...data, public_only: true }) }
     ),

@@ -14,6 +14,8 @@ function QuestionSolver() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [code, setCode] = useState("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [compileOutput, setCompileOutput] = useState("");
+  const [runtimeOutput, setRuntimeOutput] = useState("");
   const [running, setRunning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -38,6 +40,8 @@ function QuestionSolver() {
         code,
       });
       setFeedback(result.feedback);
+      setCompileOutput(result.compile_output || "");
+      setRuntimeOutput(result.runtime_output || "");
       setMessage(`Public tests: ${result.feedback.passed_tests}/${result.feedback.total_tests} passed (${result.score}/${result.max_score} pts)`);
     } catch (err: unknown) {
       setMessage(err instanceof Error ? err.message : "Run failed");
@@ -61,6 +65,8 @@ function QuestionSolver() {
       } else {
         try { setFeedback(JSON.parse(result.feedback_json)); } catch { /* ignore */ }
       }
+      setCompileOutput(result.compile_output || "");
+      setRuntimeOutput(result.runtime_output || "");
       setMessage(`Submitted! Score: ${result.score}/${result.max_score} (${result.status})`);
     } catch (err: unknown) {
       setMessage(err instanceof Error ? err.message : "Submit failed");
@@ -116,6 +122,20 @@ function QuestionSolver() {
 
       {message && (
         <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">{message}</div>
+      )}
+
+      {compileOutput && (
+        <section className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="font-semibold text-sm text-red-700 mb-2">Compile Output</h3>
+          <pre className="text-xs font-mono whitespace-pre-wrap text-red-800">{compileOutput}</pre>
+        </section>
+      )}
+
+      {runtimeOutput && !compileOutput && (
+        <section className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h3 className="font-semibold text-sm text-yellow-700 mb-2">Runtime Output</h3>
+          <pre className="text-xs font-mono whitespace-pre-wrap">{runtimeOutput}</pre>
+        </section>
       )}
 
       {feedback && (

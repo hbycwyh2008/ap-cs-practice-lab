@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Building Java runner Docker image..."
-docker build -t ap-cs-java-runner ./runner
+echo "Starting AP CS Practice Lab..."
+docker compose up --build -d
 
-echo "Starting services..."
-docker compose up -d --build
-
-echo "Waiting for database..."
-sleep 5
+echo "Waiting for backend..."
+sleep 8
 
 echo "Running seed script..."
 docker compose exec backend python seed.py

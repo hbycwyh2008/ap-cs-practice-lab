@@ -28,6 +28,23 @@ from app.services.java_runner import determine_status, run_tests
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
 
+def _sanitize_feedback_for_student(feedback: FeedbackJson) -> FeedbackJson:
+    tests = []
+    for t in feedback.tests:
+        if t.hidden:
+            tests.append(
+                t.model_copy(
+                    update={
+                        "expected_output": None,
+                        "message": "Passed" if t.passed else "Hidden test failed",
+                    }
+                )
+            )
+        else:
+            tests.append(t)
+    return feedback.model_copy(update={"tests": tests})
+
+
 def _submission_to_detail(
     session: Session,
     sub: Submission,
@@ -38,10 +55,9 @@ def _submission_to_detail(
     feedback = None
     try:
         raw = json.loads(sub.feedback_json)
-        if not show_hidden_details and student:
-            # Strip expected_output from hidden tests for student view
-            pass
         feedback = FeedbackJson(**raw)
+        if not show_hidden_details:
+            feedback = _sanitize_feedback_for_student(feedback)
     except (json.JSONDecodeError, ValueError):
         pass
 
@@ -91,7 +107,7 @@ def run_submission(
         test_cases = [tc for tc in test_cases if not tc.is_hidden]
 
     is_teacher = current_user.role == UserRole.TEACHER
-    feedback = run_tests(
+    feedback, compile_output, runtime_output = run_tests(
         data.code,
         test_cases,
         include_hidden=not data.public_only,
@@ -110,20 +126,22 @@ def run_submission(
         score=feedback.score,
         max_score=feedback.max_score,
         feedback_json=feedback.model_dump_json(),
-        compile_output="",
-        runtime_output="",
+        compile_output=compile_output,
+        runtime_output=runtime_output,
         is_final=False,
     )
     session.add(submission)
     session.commit()
 
+    display_feedback = feedback if is_teacher else _sanitize_feedback_for_student(feedback)
+
     return RunResult(
         status=SubmissionStatus(status),
         score=feedback.score,
         max_score=feedback.max_score,
-        feedback=feedback,
-        compile_output="",
-        runtime_output="",
+        feedback=display_feedback,
+        compile_output=compile_output,
+        runtime_output=runtime_output,
     )
 
 
@@ -150,7 +168,7 @@ def submit_final(
     ).all()
 
     is_teacher = current_user.role == UserRole.TEACHER
-    feedback = run_tests(
+    feedback, compile_output, runtime_output = run_tests(
         data.code,
         test_cases,
         include_hidden=True,
@@ -168,8 +186,8 @@ def submit_final(
         score=feedback.score,
         max_score=feedback.max_score,
         feedback_json=feedback.model_dump_json(),
-        compile_output="",
-        runtime_output="",
+        compile_output=compile_output,
+        runtime_output=runtime_output,
         is_final=True,
     )
     session.add(submission)

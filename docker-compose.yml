@@ -16,6 +16,11 @@ services:
       timeout: 5s
       retries: 5
 
+  java-runner:
+    build: ./runner
+    image: ap-cs-java-runner
+    command: ["echo", "Java runner image ready"]
+
   backend:
     build: ./backend
     ports:
@@ -26,6 +31,7 @@ services:
       JAVA_RUNNER_IMAGE: ap-cs-java-runner
       JAVA_RUNNER_MEMORY: 256m
       JAVA_RUNNER_CPUS: "0.5"
+      JAVA_RUNNER_PIDS_LIMIT: "64"
       JAVA_RUNNER_TIMEOUT: "5"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -33,6 +39,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      java-runner:
+        condition: service_completed_successfully
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:

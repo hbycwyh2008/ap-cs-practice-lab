@@ -3,10 +3,35 @@ from sqlmodel import Session, select
 
 from app.auth import get_current_user, require_teacher
 from app.database import get_session
-from app.models import Question, TestCase, User, UserRole
+from app.models import Assignment, AssignmentQuestion, Question, User, UserRole
 from app.schemas import QuestionCreate, QuestionRead, QuestionUpdate
 
 router = APIRouter(prefix="/questions", tags=["questions"])
+
+
+def _student_assigned_question_ids(session: Session, user: User) -> set[int]:
+    if not user.class_id:
+        return set()
+    assignments = session.exec(
+        select(Assignment).where(Assignment.class_id == user.class_id)
+    ).all()
+    if not assignments:
+        return set()
+    assignment_ids = [a.id for a in assignments]
+    rows = session.exec(
+        select(AssignmentQuestion).where(
+            AssignmentQuestion.assignment_id.in_(assignment_ids)
+        )
+    ).all()
+    return {row.question_id for row in rows}
+
+
+def _ensure_student_can_access_question(
+    session: Session, user: User, question_id: int
+) -> None:
+    allowed = _student_assigned_question_ids(session, user)
+    if question_id not in allowed:
+        raise HTTPException(status_code=403, detail="Question not in your assignments")
 
 
 @router.get("", response_model=list[QuestionRead])
@@ -16,8 +41,12 @@ def list_questions(
 ):
     if current_user.role == UserRole.TEACHER:
         stmt = select(Question).where(Question.created_by == current_user.id)
-    else:
-        stmt = select(Question)
+        return session.exec(stmt.order_by(Question.created_at.desc())).all()
+
+    allowed_ids = _student_assigned_question_ids(session, current_user)
+    if not allowed_ids:
+        return []
+    stmt = select(Question).where(Question.id.in_(allowed_ids))
     return session.exec(stmt.order_by(Question.created_at.desc())).all()
 
 
@@ -43,6 +72,8 @@ def get_question(
     question = session.get(Question, question_id)
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
+    if current_user.role == UserRole.STUDENT:
+        _ensure_student_can_access_question(session, current_user, question_id)
     return question
 
 

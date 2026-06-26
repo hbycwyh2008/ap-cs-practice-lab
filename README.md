@@ -39,13 +39,10 @@ ap-cs-practice-lab/
 ```bash
 cd ap-cs-practice-lab
 
-# 1. Build the Java runner image (required once)
-docker build -t ap-cs-java-runner ./runner
+# Start all services (builds postgres, java-runner, backend, frontend)
+docker compose up --build -d
 
-# 2. Start all services
-docker compose up -d --build
-
-# 3. Seed demo data
+# Seed demo data
 docker compose exec backend python seed.py
 ```
 
@@ -68,12 +65,12 @@ Open **http://localhost:3000** in your browser.
 Seed data includes:
 - Class: **AP CSA Period 1** (2026-2027)
 - Question: **Find Maximum Value** (Array unit, 4 test cases, 10 points)
-- Assignment: **Array Practice - Week 1**
+- Assignment: **Array Traversal Practice**
 
 ## Testing the First FRQ Auto-Grading
 
 1. Log in as **student@example.com**
-2. Go to **My Assignments** → **Array Practice - Week 1**
+2. Go to **My Assignments** → **Array Traversal Practice**
 3. Click **Find Maximum Value**
 4. Edit the code to solve the problem:
 
@@ -147,6 +144,7 @@ Student code runs inside an isolated Docker container with:
 | Network | `--network none` (no internet) |
 | Memory | 256 MB |
 | CPU | 0.5 cores |
+| PIDs | 64 process limit |
 | Timeout | 5 seconds (subprocess level) |
 | Filesystem | Temp directory only, cleaned after each run |
 | User | Non-root `runner` user inside container |

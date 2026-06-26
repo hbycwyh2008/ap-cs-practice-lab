@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     java_runner_memory: str = "256m"
     java_runner_cpus: str = "0.5"
     java_runner_timeout: int = 5
+    java_runner_pids_limit: int = 64
     java_runner_tmp_dir: str = "/tmp/java-runs"
 
     class Config:

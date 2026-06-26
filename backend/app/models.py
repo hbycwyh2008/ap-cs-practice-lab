@@ -28,7 +28,6 @@ class Difficulty(str, Enum):
 
 class SubmissionStatus(str, Enum):
     PENDING = "pending"
-    COMPILED = "compiled"
     FAILED_COMPILE = "failed_compile"
     PASSED = "passed"
     FAILED = "failed"

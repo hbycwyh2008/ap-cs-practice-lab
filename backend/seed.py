@@ -115,7 +115,7 @@ def seed():
         session.commit()
 
         assignment = Assignment(
-            title="Array Practice - Week 1",
+            title="Array Traversal Practice",
             description="Practice traversing arrays with FRQ problems.",
             class_id=school_class.id,
             created_by=teacher.id,
