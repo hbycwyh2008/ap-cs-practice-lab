@@ -399,6 +399,102 @@ environment:
 
 See `.env.example` for all configuration options.
 
+## Milestone 3.4: Deployment Readiness
+
+**Production deployment preparation** with comprehensive documentation and configuration management.
+
+### Deployment Documentation
+
+Comprehensive guides for deploying to production:
+
+- **[Deployment Checklist](docs/DEPLOYMENT_CHECKLIST.md)** - Step-by-step deployment guide with security checklist
+- **[Beta Demo Flow](docs/BETA_DEMO_FLOW.md)** - Complete walkthrough for demonstrating the platform
+
+### Environment Variables
+
+**Backend Configuration:**
+
+All configuration is managed through environment variables. See `.env.example` for complete list.
+
+Critical production settings:
+```bash
+SECRET_KEY=your-secure-random-key-here       # MUST change from default
+APP_ENV=production                           # Enables production checks
+ENABLE_PUBLIC_REGISTER=false                 # Disables public registration
+CORS_ORIGINS=https://your-domain.com         # Set to frontend URL
+DATABASE_URL=postgresql://...                # Production database
+```
+
+**Frontend Configuration:**
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000    # Local development
+NEXT_PUBLIC_API_URL=https://api.your-domain.com  # Production
+```
+
+### Docker & Java Runner Requirements
+
+**⚠️ CRITICAL:** This MVP requires Docker-based Java code execution.
+
+**Deployment platform must support:**
+- Docker socket access (`/var/run/docker.sock`), OR
+- Equivalent secure container execution strategy
+
+Without Docker access, Java auto-grading will not function.
+
+### Pre-Deployment Verification
+
+**Always run the full smoke test before going live:**
+
+```bash
+docker compose down -v
+docker compose up --build -d
+docker compose exec backend python seed.py
+python scripts/smoke_test.py
+```
+
+Expected output: `SMOKE TEST PASSED`
+
+### Security Checklist
+
+Before beta launch:
+- ✅ Change `SECRET_KEY` to secure random value
+- ✅ Set `APP_ENV=production`
+- ✅ Set `ENABLE_PUBLIC_REGISTER=false`
+- ✅ Configure `CORS_ORIGINS` to deployed frontend URL
+- ✅ Use secure database credentials
+- ✅ Verify HTTPS for both frontend and backend
+- ✅ Run smoke test on production environment
+- ✅ Review [Deployment Checklist](docs/DEPLOYMENT_CHECKLIST.md)
+
+### Beta Demo Guide
+
+For demonstrating the platform to potential users, see [Beta Demo Flow](docs/BETA_DEMO_FLOW.md).
+
+**Quick demo flow:**
+1. Login as teacher
+2. Create class and bulk-create anonymized students
+3. Auto-generate or create assignment
+4. Login as student and submit solution
+5. View teacher analytics and export CSV
+6. Show privacy notice page
+
+### Known Limitations (Beta MVP)
+
+- Single-school deployment only
+- Teacher accounts must be created manually or via seed
+- No password reset mechanism
+- No OAuth/SSO integration
+- Docker socket access required for Java runner
+- Desktop browser recommended (not mobile-optimized)
+
+### Production Support
+
+- **Health Check:** `GET /health` endpoint for monitoring
+- **Logs:** Monitor for Java runner timeouts, database issues, CORS errors
+- **Backup:** Regular PostgreSQL database backups recommended
+- **Rollback:** Keep previous Docker images for quick rollback
+
 ### Question tags
 
 Each question now includes:
