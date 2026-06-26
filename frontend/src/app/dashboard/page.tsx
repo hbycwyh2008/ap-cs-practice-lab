@@ -201,61 +201,72 @@ export default function DashboardPage() {
                 </Card>
               </div>
 
-              {/* Beta Demo Flow Card */}
               <Card className="border-2 shadow-xl bg-gradient-to-br from-amber-50 to-amber-100">
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-6 h-6 text-amber-600" />
-                    <CardTitle className="text-xl">Beta Demo Quick Start</CardTitle>
+                    <CardTitle className="text-xl">Teacher Command Center</CardTitle>
                   </div>
                   <CardDescription className="text-amber-700">
-                    Follow these steps to explore the platform
+                    Teacher / Dashboard
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
                     {[
                       {
-                        num: 1,
-                        title: "View Classes",
-                        desc: "Check your existing classes",
-                        href: "/teacher/classes",
+                        title: "Start Class Setup",
+                        desc: "Create class and bulk-create student accounts.",
+                        links: [
+                          { href: "/teacher/classes/new", label: "Create Class" },
+                          { href: "/teacher/classes", label: "Bulk Create Students" },
+                        ],
                       },
                       {
-                        num: 2,
-                        title: "Browse Questions",
-                        desc: "Explore the question bank",
-                        href: "/teacher/questions",
+                        title: "Build Question Bank",
+                        desc: "Manage FRQ and MCQ question collections.",
+                        links: [
+                          { href: "/teacher/questions", label: "Question Bank" },
+                          { href: "/teacher/questions/import", label: "Import FRQ" },
+                          { href: "/teacher/questions/import-mcq", label: "Import MCQ" },
+                        ],
                       },
                       {
-                        num: 3,
-                        title: "Create Assignment",
-                        desc: "Auto-generate or manual",
-                        href: "/teacher/assignments/new",
+                        title: "Assign Practice",
+                        desc: "Create and manage classroom assignments.",
+                        links: [
+                          { href: "/teacher/assignments/new", label: "Create Assignment" },
+                          { href: "/teacher/assignments", label: "View Assignments" },
+                        ],
                       },
                       {
-                        num: 4,
-                        title: "View Submissions",
-                        desc: "Track student progress",
-                        href: "/teacher/submissions",
+                        title: "Review Progress",
+                        desc: "Monitor submissions and class analytics.",
+                        links: [
+                          { href: "/teacher/submissions", label: "View Submissions" },
+                          { href: "/teacher/analytics", label: "View Analytics" },
+                        ],
                       },
-                    ].map((step) => (
-                      <Link
-                        key={step.num}
-                        href={step.href}
-                        className="block p-4 bg-white rounded-lg border-2 border-amber-200 hover:border-amber-400 hover:shadow-md transition-all group"
+                    ].map((section) => (
+                      <div
+                        key={section.title}
+                        className="p-4 bg-white rounded-lg border-2 border-amber-200"
                       >
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-8 h-8 bg-amber-500 text-white rounded-full flex items-center justify-center font-bold">
-                            {step.num}
-                          </div>
-                          <ArrowRight className="w-4 h-4 text-amber-600 group-hover:translate-x-1 transition-transform" />
+                        <h3 className="font-semibold text-slate-900 mb-1">{section.title}</h3>
+                        <p className="text-xs text-slate-600 mb-3">{section.desc}</p>
+                        <div className="space-y-2">
+                          {section.links.map((item) => (
+                            <Link
+                              key={`${section.title}-${item.href}`}
+                              href={item.href}
+                              className="flex items-center justify-between rounded border px-3 py-2 text-sm hover:bg-slate-50"
+                            >
+                              <span>{item.label}</span>
+                              <ArrowRight className="w-4 h-4 text-slate-500" />
+                            </Link>
+                          ))}
                         </div>
-                        <h3 className="font-semibold text-slate-900 mb-1">
-                          {step.title}
-                        </h3>
-                        <p className="text-xs text-slate-600">{step.desc}</p>
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 </CardContent>
@@ -352,7 +363,7 @@ export default function DashboardPage() {
 
               {/* Analytics Section */}
               {analytics && (
-                <div className="space-y-6">
+                <div className="space-y-6" id="analytics">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <BarChart3 className="w-6 h-6 text-indigo-600" />

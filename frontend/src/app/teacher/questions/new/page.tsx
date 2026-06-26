@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 
 const DEFAULT_STARTER = `public class Solution {
     public int solve(int[] nums) {
@@ -48,8 +51,16 @@ export default function NewQuestionPage() {
   if (!user || user.role !== "teacher") return <div className="p-8">Access denied</div>;
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Create New Question</h1>
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <PageHeader
+        title="Create New Question"
+        description="Teacher / Question Bank / New Question"
+        action={
+          <Button variant="outline" asChild>
+            <Link href="/teacher/questions">Back to Question Bank</Link>
+          </Button>
+        }
+      />
       <form onSubmit={handleSubmit} className="space-y-4 bg-white rounded-lg shadow p-6">
         <Field label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} required />
         <div className="grid grid-cols-2 gap-4">

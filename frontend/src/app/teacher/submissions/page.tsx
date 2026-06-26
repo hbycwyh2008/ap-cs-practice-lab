@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api, Assignment, SchoolClass, Submission } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function TeacherSubmissionsPage() {
   const { user, loading } = useAuth();
@@ -35,10 +39,18 @@ export default function TeacherSubmissionsPage() {
   if (!user || user.role !== "teacher") return <div className="p-8">Access denied</div>;
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Submissions</h1>
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
+      <PageHeader
+        title="Submissions"
+        description="Teacher / Submissions"
+        action={
+          <Button variant="outline" asChild>
+            <Link href="/teacher/analytics">Open Analytics</Link>
+          </Button>
+        }
+      />
 
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-wrap gap-4">
         <select value={filters.class_id} onChange={(e) => setFilters({ ...filters, class_id: e.target.value })} className="border rounded px-3 py-2 text-sm">
           <option value="">All Classes</option>
           {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -51,7 +63,8 @@ export default function TeacherSubmissionsPage() {
 
       <div className="space-y-3">
         {submissions.map((s) => (
-          <div key={s.id} className="bg-white rounded-lg shadow p-4">
+          <Card key={s.id}>
+            <CardContent className="pt-6">
             <div className="flex justify-between mb-2">
               <div>
                 <p className="font-medium">{s.question_title}</p>
@@ -74,7 +87,8 @@ export default function TeacherSubmissionsPage() {
                 ))}
               </div>
             )}
-          </div>
+            </CardContent>
+          </Card>
         ))}
         {submissions.length === 0 && <p className="text-gray-400 text-center py-8">No submissions found.</p>}
       </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { api, Question, TestCase, Submission } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -37,6 +38,15 @@ export default function TeacherQuestionDetailPage() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
+      <div className="mb-4">
+        <Link
+          href="/teacher/questions"
+          className="text-sm text-blue-600 hover:underline"
+        >
+          Back to Question Bank
+        </Link>
+      </div>
+      <p className="text-sm text-gray-500 mb-2">Teacher / Question Bank / Question Detail</p>
       <h1 className="text-2xl font-bold mb-2">{question.title}</h1>
       <p className="text-gray-500 mb-6">{question.unit} · {question.topic} · {question.difficulty}</p>
 

@@ -314,6 +314,15 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  exportClassStudentsCSV: async (classId: number) => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const res = await fetch(`${API_URL}/classes/${classId}/students/export.csv`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("Failed to export class students CSV");
+    return res.blob();
+  },
 
   getQuestions: () => request<Question[]>("/questions"),
   getQuestion: (id: number) => request<Question>(`/questions/${id}`),

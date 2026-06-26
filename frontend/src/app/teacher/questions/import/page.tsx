@@ -258,8 +258,7 @@ export default function ImportQuestionsPage() {
             <Badge variant="outline">Structured JSON</Badge>
           </div>
           <p className="text-muted-foreground mt-2">
-            Paste structured JSON prepared from a PDF or other source. Review
-            imported questions before classroom use.
+            Teacher / Question Bank / Import FRQ
           </p>
         </div>
         <Button variant="outline" asChild>

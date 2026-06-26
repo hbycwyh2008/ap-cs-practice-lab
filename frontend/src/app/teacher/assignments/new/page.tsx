@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { api, Question, SchoolClass } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 
 type Mode = "manual" | "auto";
 
@@ -131,8 +134,16 @@ export default function NewAssignmentPage() {
   if (!user || user.role !== "teacher") return <div className="p-8">Access denied</div>;
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Create Assignment</h1>
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <PageHeader
+        title="Create Assignment"
+        description="Teacher / Assignments / New Assignment"
+        action={
+          <Button variant="outline" asChild>
+            <Link href="/teacher/assignments">Back to Assignments</Link>
+          </Button>
+        }
+      />
 
       <div className="flex gap-2 mb-6">
         <button

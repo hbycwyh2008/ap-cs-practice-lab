@@ -49,7 +49,7 @@ export default function ClassesPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           <PageHeader
             title="Your Classes"
-            description="Manage your classes and student rosters"
+            description="Teacher / Classes & Students"
             icon={Users}
             action={
               <Button asChild>

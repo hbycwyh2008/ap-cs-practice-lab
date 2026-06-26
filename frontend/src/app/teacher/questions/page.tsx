@@ -77,7 +77,7 @@ export default function TeacherQuestionsPage() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <PageHeader
           title="Question Bank"
-          description="Manage your AP CSA Free Response Questions"
+          description="Teacher / Question Bank"
           icon={BookOpen}
           action={
             <div className="flex flex-wrap gap-2">

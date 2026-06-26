@@ -160,8 +160,7 @@ export default function ImportMCQPage() {
             <Badge variant="outline">MCQ JSON</Badge>
           </div>
           <p className="text-muted-foreground mt-2">
-            Paste a multiple-choice question bank JSON object. Correct answers
-            are stored server-side and are not shown to students.
+            Teacher / Question Bank / Import MCQ
           </p>
         </div>
         <Button variant="outline" asChild>
