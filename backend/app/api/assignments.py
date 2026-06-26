@@ -10,6 +10,7 @@ from app.models import (
     Question,
     QuestionType,
     SchoolClass,
+    Submission,
     User,
     UserRole,
 )
@@ -17,6 +18,7 @@ from app.schemas import (
     AssignmentCreate,
     AssignmentDetail,
     AssignmentGenerateRequest,
+    AssignmentQuestionInput,
     AssignmentQuestionRead,
     AssignmentRead,
     AssignmentUpdate,
@@ -24,6 +26,24 @@ from app.schemas import (
 )
 
 router = APIRouter(prefix="/assignments", tags=["assignments"])
+
+
+def _validate_teacher_questions(
+    session: Session,
+    current_user: User,
+    question_inputs: list[AssignmentQuestionInput],
+) -> None:
+    for q_input in question_inputs:
+        question = session.get(Question, q_input.question_id)
+        if not question:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Question {q_input.question_id} not found",
+            )
+        if question.created_by != current_user.id:
+            raise HTTPException(status_code=403, detail="Access denied")
+        if not question.is_active:
+            raise HTTPException(status_code=400, detail="Question is inactive")
 
 
 def _build_assignment_detail(session: Session, assignment: Assignment) -> AssignmentDetail:
@@ -84,6 +104,8 @@ def create_assignment(
         raise HTTPException(status_code=404, detail="Class not found")
     if school_class.teacher_id != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
+
+    _validate_teacher_questions(session, current_user, data.questions)
 
     assignment = Assignment(
         title=data.title,
@@ -223,6 +245,8 @@ def update_assignment(
     session.add(assignment)
 
     if data.questions is not None:
+        _validate_teacher_questions(session, current_user, data.questions)
+
         existing = session.exec(
             select(AssignmentQuestion).where(
                 AssignmentQuestion.assignment_id == assignment_id
@@ -257,6 +281,19 @@ def delete_assignment(
         raise HTTPException(status_code=404, detail="Assignment not found")
     if assignment.created_by != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
+
+    submissions = session.exec(
+        select(Submission).where(Submission.assignment_id == assignment_id)
+    ).all()
+    for submission in submissions:
+        session.delete(submission)
+
+    assignment_questions = session.exec(
+        select(AssignmentQuestion).where(AssignmentQuestion.assignment_id == assignment_id)
+    ).all()
+    for aq in assignment_questions:
+        session.delete(aq)
+
     session.delete(assignment)
     session.commit()
     return {"ok": True}

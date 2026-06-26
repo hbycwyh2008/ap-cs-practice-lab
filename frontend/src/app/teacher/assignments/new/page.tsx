@@ -34,6 +34,10 @@ export default function NewAssignmentPage() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const activeQuestions = questions.filter((q) => q.is_active !== false);
+  const unitOptions = [...new Set(activeQuestions.map((q) => q.unit).filter(Boolean))].sort();
+  const skillOptions = [...new Set(activeQuestions.map((q) => q.skill).filter(Boolean))].sort();
+
   useEffect(() => {
     if (user?.role === "teacher") {
       api.getClasses().then((c) => {
@@ -46,6 +50,15 @@ export default function NewAssignmentPage() {
       api.getQuestions().then(setQuestions);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (unitOptions.length > 0 && !unitOptions.includes(autoForm.unit)) {
+      setAutoForm((f) => ({ ...f, unit: unitOptions[0] }));
+    }
+    if (skillOptions.length > 0 && !skillOptions.includes(autoForm.skill)) {
+      setAutoForm((f) => ({ ...f, skill: skillOptions[0] }));
+    }
+  }, [unitOptions, skillOptions, autoForm.unit, autoForm.skill]);
 
   const toggleQuestion = (qid: number) => {
     setManualForm((f) => ({
@@ -163,6 +176,11 @@ export default function NewAssignmentPage() {
         </form>
       ) : (
         <form onSubmit={handleAutoSubmit} className="space-y-4 bg-white rounded-lg shadow p-6">
+          {activeQuestions.length === 0 ? (
+            <p className="text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-sm">
+              Create tagged questions before auto-generating assignments.
+            </p>
+          ) : null}
           <Field label="Title" value={autoForm.title} onChange={(v) => setAutoForm({ ...autoForm, title: v })} required />
           <div>
             <label className="block text-sm font-medium mb-1">Description</label>
@@ -171,7 +189,20 @@ export default function NewAssignmentPage() {
           <ClassSelect classes={classes} value={autoForm.class_id} onChange={(id) => setAutoForm({ ...autoForm, class_id: id })} />
           <DueDate value={autoForm.due_at} onChange={(v) => setAutoForm({ ...autoForm, due_at: v })} />
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Unit" value={autoForm.unit} onChange={(v) => setAutoForm({ ...autoForm, unit: v })} required />
+            <div>
+              <label className="block text-sm font-medium mb-1">Unit</label>
+              <select
+                value={autoForm.unit}
+                onChange={(e) => setAutoForm({ ...autoForm, unit: e.target.value })}
+                className="w-full border rounded-md px-3 py-2"
+                required
+                disabled={unitOptions.length === 0}
+              >
+                {unitOptions.map((unit) => (
+                  <option key={unit} value={unit}>{unit}</option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1">Difficulty</label>
               <select value={autoForm.difficulty} onChange={(e) => setAutoForm({ ...autoForm, difficulty: e.target.value })} className="w-full border rounded-md px-3 py-2">
@@ -182,7 +213,20 @@ export default function NewAssignmentPage() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Skill" value={autoForm.skill} onChange={(v) => setAutoForm({ ...autoForm, skill: v })} required />
+            <div>
+              <label className="block text-sm font-medium mb-1">Skill</label>
+              <select
+                value={autoForm.skill}
+                onChange={(e) => setAutoForm({ ...autoForm, skill: e.target.value })}
+                className="w-full border rounded-md px-3 py-2"
+                required
+                disabled={skillOptions.length === 0}
+              >
+                {skillOptions.map((skill) => (
+                  <option key={skill} value={skill}>{skill}</option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1">Question Count</label>
               <input type="number" min={1} value={autoForm.question_count} onChange={(e) => setAutoForm({ ...autoForm, question_count: Number(e.target.value) })} className="w-full border rounded-md px-3 py-2" required />
@@ -193,7 +237,7 @@ export default function NewAssignmentPage() {
             Include questions used in recent assignments
           </label>
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button type="submit" disabled={saving} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:opacity-50">
+          <button type="submit" disabled={saving || activeQuestions.length === 0} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:opacity-50">
             {saving ? "Generating..." : "Generate Assignment"}
           </button>
         </form>

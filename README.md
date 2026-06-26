@@ -206,8 +206,12 @@ Teachers can auto-generate AP CSA assignments from the question bank using tags:
 - **unit** — e.g. Array, ArrayList, 2D Array
 - **difficulty** — easy, medium, hard
 - **skill** — e.g. traversal, selection
+- **is_active** — only active questions are eligible
 - **question_count** — how many questions to include
 - **include_recent_questions** — whether to allow questions already used in prior assignments
+
+Auto-generate and manual assignment creation both require that every selected
+question belongs to the current teacher and is active (`is_active == true`).
 
 ### Question tags
 
@@ -257,6 +261,9 @@ docker compose up --build -d
 docker compose exec backend python seed.py
 python scripts/smoke_test.py
 ```
+
+`scripts/smoke_test.py` creates temporary orphan questions and auto-generated
+assignments during regression checks and deletes them before finishing.
 
 Current scope: **AP_CSA** / **FRQ_CODE** / `public int solve(int[] nums)` only.
 

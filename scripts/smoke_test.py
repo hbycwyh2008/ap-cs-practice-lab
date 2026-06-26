@@ -12,6 +12,8 @@ Regression checks:
   - student test-cases omit hidden tests and expected_output
   - student cannot submit a question outside the assignment (403)
   - teacher can auto-generate assignment from question tags
+  - auto-generated assignment accepts a student submission
+  - temporary test data (orphan questions, auto assignments) is cleaned up
 
 Usage:
     python scripts/smoke_test.py
@@ -48,6 +50,29 @@ STARTER_CODE = """public class Solution {
     }
 }"""
 
+# Seed traversal/easy solutions used by auto-generate smoke test.
+AUTO_GENERATE_SOLUTIONS = {
+    "Find Maximum Value": CORRECT_SOLUTION,
+    "Count Even Numbers": """public class Solution {
+    public int solve(int[] nums) {
+        int count = 0;
+        for (int n : nums) {
+            if (n % 2 == 0) count++;
+        }
+        return count;
+    }
+}""",
+    "Count Negative Numbers": """public class Solution {
+    public int solve(int[] nums) {
+        int count = 0;
+        for (int n : nums) {
+            if (n < 0) count++;
+        }
+        return count;
+    }
+}""",
+}
+
 
 def _request(method, path, token=None, body=None):
     url = f"{BASE_URL}{path}"
@@ -75,6 +100,24 @@ def login(creds):
     token = data["access_token"]
     print(f"  [ok] logged in as {creds['email']}")
     return token
+
+
+def _delete_question(teacher_token, question_id):
+    status, resp = _request("DELETE", f"/questions/{question_id}", token=teacher_token)
+    assert status == 200, (
+        f"DELETE /questions/{question_id} failed: {status} {resp}"
+    )
+    print(f"  [ok] deleted orphan question id={question_id}")
+
+
+def _delete_assignment(teacher_token, assignment_id):
+    status, resp = _request(
+        "DELETE", f"/assignments/{assignment_id}", token=teacher_token
+    )
+    assert status == 200, (
+        f"DELETE /assignments/{assignment_id} failed: {status} {resp}"
+    )
+    print(f"  [ok] deleted auto-generated assignment id={assignment_id}")
 
 
 def test_public_run(student_token, assignment_id, question_id):
@@ -149,6 +192,8 @@ def test_unassigned_question_forbidden(
     )
     print(f"  [ok] submit blocked for orphan question id={orphan_id}")
 
+    _delete_question(teacher_token, orphan_id)
+
 
 def test_auto_generate(teacher_token, student_token):
     print("10. Regression: teacher auto-generates assignment")
@@ -173,10 +218,11 @@ def test_auto_generate(teacher_token, student_token):
         },
     )
     assert status == 200, f"POST /assignments/generate failed: {status} {generated}"
+    generated_id = generated["id"]
     q_count = len(generated.get("questions", []))
     assert q_count >= 1, f"Expected at least 1 question, got {q_count}"
     assert q_count == 2, f"Expected 2 questions, got {q_count}"
-    print(f"  [ok] generated assignment id={generated['id']} with {q_count} question(s)")
+    print(f"  [ok] generated assignment id={generated_id} with {q_count} question(s)")
 
     status, student_assignments = _request("GET", "/assignments", token=student_token)
     assert status == 200, f"Student GET /assignments failed: {status}"
@@ -185,6 +231,50 @@ def test_auto_generate(teacher_token, student_token):
         f"Student cannot see auto-generated assignment; titles={titles}"
     )
     print("  [ok] student sees auto-generated assignment")
+
+    status, detail = _request(
+        "GET", f"/assignments/{generated_id}", token=student_token
+    )
+    assert status == 200, (
+        f"GET /assignments/{generated_id} failed: {status} {detail}"
+    )
+    questions = detail.get("questions", [])
+    assert questions, "Auto-generated assignment has no questions"
+    first = questions[0]
+    question_id = first["question_id"]
+    question_title = (first.get("question") or {}).get("title", "")
+    print(f"  [ok] first question id={question_id} ({question_title})")
+
+    solution = AUTO_GENERATE_SOLUTIONS.get(question_title, CORRECT_SOLUTION)
+    status, submission = _request(
+        "POST",
+        "/submissions/submit",
+        token=student_token,
+        body={
+            "assignment_id": generated_id,
+            "question_id": question_id,
+            "code": solution,
+        },
+    )
+    assert status == 200, f"submit on auto-generated assignment failed: {status} {submission}"
+    assert submission.get("max_score") == 10, (
+        f"Expected max_score 10, got {submission.get('max_score')}"
+    )
+    assert submission.get("status"), "Submission missing status"
+    if question_title in AUTO_GENERATE_SOLUTIONS:
+        assert submission["score"] == 10, (
+            f"Expected score 10 for {question_title}, got {submission['score']}"
+        )
+    else:
+        assert submission["score"] >= 0, (
+            f"Expected non-negative score, got {submission['score']}"
+        )
+    print(
+        f"  [ok] student submitted auto-generated question "
+        f"{submission['score']}/{submission['max_score']} ({submission['status']})"
+    )
+
+    _delete_assignment(teacher_token, generated_id)
 
 
 def _find_seed_assignment(assignments):
