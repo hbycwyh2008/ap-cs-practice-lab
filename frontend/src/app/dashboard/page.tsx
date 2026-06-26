@@ -437,8 +437,8 @@ export default function DashboardPage() {
                             <TableRow>
                               <TableHead>Question</TableHead>
                               <TableHead>Attempts</TableHead>
-                              <TableHead>Pass Rate</TableHead>
                               <TableHead>Avg Score</TableHead>
+                              <TableHead>Score Band</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -448,20 +448,20 @@ export default function DashboardPage() {
                                   {stat.title}
                                 </TableCell>
                                 <TableCell>{stat.submission_count}</TableCell>
+                                <TableCell>{stat.avg_score}</TableCell>
                                 <TableCell>
                                   <Badge
                                     variant={
-                                      stat.pass_rate >= 70
+                                      stat.avg_score >= 70
                                         ? "default"
-                                        : stat.pass_rate >= 40
+                                        : stat.avg_score >= 40
                                         ? "secondary"
                                         : "destructive"
                                     }
                                   >
-                                    {stat.pass_rate}%
+                                    {stat.avg_score}%
                                   </Badge>
                                 </TableCell>
-                                <TableCell>{stat.avg_score}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
