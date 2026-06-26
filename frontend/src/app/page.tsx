@@ -196,42 +196,48 @@ export default function HomePage() {
               title: "Auto-Grading Engine",
               description:
                 "Instant feedback with public and hidden test cases. Docker-sandboxed Java execution.",
-              color: "blue",
+              bgColor: "bg-blue-100",
+              textColor: "text-blue-600",
             },
             {
               icon: BarChart3,
               title: "Teacher Analytics",
               description:
                 "Track class progress, completion rates, and individual student performance at a glance.",
-              color: "green",
+              bgColor: "bg-green-100",
+              textColor: "text-green-600",
             },
             {
               icon: Shield,
               title: "Privacy-First Beta",
               description:
                 "Anonymized student accounts. No real emails, phone numbers, or personal data required.",
-              color: "purple",
+              bgColor: "bg-purple-100",
+              textColor: "text-purple-600",
             },
             {
               icon: Zap,
               title: "Quick Setup",
               description:
                 "Bulk-create anonymous student accounts. Generate typed assignments. CSV export.",
-              color: "amber",
+              bgColor: "bg-amber-100",
+              textColor: "text-amber-600",
             },
             {
               icon: BookOpen,
               title: "AP CSA Question Bank",
               description:
                 "Curated FRQ practice problems with tags, difficulty levels, and starter code.",
-              color: "indigo",
+              bgColor: "bg-indigo-100",
+              textColor: "text-indigo-600",
             },
             {
               icon: Award,
               title: "Real Test Environment",
               description:
                 "Practice with the same constraints and feedback as the actual AP exam workflow.",
-              color: "red",
+              bgColor: "bg-red-100",
+              textColor: "text-red-600",
             },
           ].map((feature, i) => {
             const Icon = feature.icon;
@@ -242,10 +248,10 @@ export default function HomePage() {
               >
                 <CardHeader>
                   <div
-                    className={`w-12 h-12 bg-${feature.color}-100 rounded-lg flex items-center justify-center mb-3`}
+                    className={`w-12 h-12 ${feature.bgColor} rounded-lg flex items-center justify-center mb-3`}
                   >
                     <Icon
-                      className={`w-6 h-6 text-${feature.color}-600`}
+                      className={`w-6 h-6 ${feature.textColor}`}
                     />
                   </div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>

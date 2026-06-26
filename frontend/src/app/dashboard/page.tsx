@@ -34,7 +34,6 @@ export default function DashboardPage() {
   const router = useRouter();
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [studentAvgScore, setStudentAvgScore] = useState<number>(0);
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
@@ -49,20 +48,9 @@ export default function DashboardPage() {
         })
         .finally(() => setLoadingData(false));
     } else if (user && user.role === "student") {
-      api
-        .getStudentAssignments()
+      api.getAssignments()
         .then((a) => {
           setAssignments(a);
-          const scores = a.flatMap((asn) =>
-            asn.questions
-              ?.filter((q) => q.score !== null)
-              .map((q) => (q.score! / q.max_score) * 100) || []
-          );
-          const avg =
-            scores.length > 0
-              ? scores.reduce((sum, s) => sum + s, 0) / scores.length
-              : 0;
-          setStudentAvgScore(avg);
         })
         .finally(() => setLoadingData(false));
     }
@@ -155,10 +143,6 @@ export default function DashboardPage() {
                     <div className="text-4xl font-bold text-green-900">
                       {assignments.length}
                     </div>
-                    <p className="text-xs text-green-600 mt-2">
-                      {assignments.reduce((sum, a) => sum + (a.questions?.length || 0), 0)}{" "}
-                      total questions
-                    </p>
                   </CardContent>
                 </Card>
 
@@ -322,8 +306,7 @@ export default function DashboardPage() {
                                 {a.title}
                               </h3>
                               <p className="text-sm text-slate-500">
-                                {a.questions?.length || 0} questions · Due{" "}
-                                {new Date(a.due_at).toLocaleDateString()}
+                                Due {new Date(a.due_at).toLocaleDateString()}
                               </p>
                             </div>
                             <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all" />
@@ -376,10 +359,6 @@ export default function DashboardPage() {
                     <div className="text-4xl font-bold text-green-900">
                       {assignments.length}
                     </div>
-                    <p className="text-xs text-green-600 mt-2">
-                      {assignments.reduce((sum, a) => sum + (a.questions?.length || 0), 0)}{" "}
-                      total questions
-                    </p>
                   </CardContent>
                 </Card>
 
@@ -387,18 +366,15 @@ export default function DashboardPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm font-medium text-blue-700">
-                        Average Score
+                        Assignments
                       </CardTitle>
                       <TrendingUp className="w-5 h-5 text-blue-600" />
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="text-4xl font-bold text-blue-900">
-                      {studentAvgScore.toFixed(0)}%
+                      {assignments.length}
                     </div>
-                    <p className="text-xs text-blue-600 mt-2">
-                      Across all submissions
-                    </p>
                   </CardContent>
                 </Card>
               </div>
@@ -426,9 +402,6 @@ export default function DashboardPage() {
                   ) : (
                     <div className="space-y-4">
                       {assignments.map((a) => {
-                        const completed = a.questions?.filter(q => q.score !== null).length || 0;
-                        const total = a.questions?.length || 0;
-                        const completionRate = total > 0 ? (completed / total) * 100 : 0;
                         const isOverdue = new Date(a.due_at) < new Date();
 
                         return (
@@ -442,25 +415,10 @@ export default function DashboardPage() {
                                 <h3 className="text-xl font-semibold text-slate-900 group-hover:text-blue-600">
                                   {a.title}
                                 </h3>
-                                <p className="text-sm text-slate-500 mt-1">
-                                  {total} questions
-                                </p>
                               </div>
                               <ArrowRight className="w-6 h-6 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                             </div>
                             <div className="flex items-center gap-4">
-                              <div className="flex items-center gap-2">
-                                {completionRate === 100 ? (
-                                  <CheckCircle2 className="w-5 h-5 text-green-600" />
-                                ) : isOverdue ? (
-                                  <AlertCircle className="w-5 h-5 text-red-600" />
-                                ) : (
-                                  <Clock className="w-5 h-5 text-amber-600" />
-                                )}
-                                <span className="text-sm font-medium text-slate-700">
-                                  {completed}/{total} completed
-                                </span>
-                              </div>
                               <Badge variant={isOverdue ? "destructive" : "secondary"}>
                                 Due {new Date(a.due_at).toLocaleDateString()}
                               </Badge>
