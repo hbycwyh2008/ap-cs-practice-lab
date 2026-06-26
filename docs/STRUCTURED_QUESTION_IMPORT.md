@@ -125,3 +125,31 @@ Before using imported questions in class:
 9. Confirm teacher submissions and analytics still work.
 
 Imported questions should always be reviewed before classroom use.
+
+## Dry Run with Sample Import File
+
+Use `docs/sample-question-import.json` for a safe import dry run. The file contains teacher-created sample AP CSA-style array questions and no copyrighted AP exam content.
+
+1. Log in as the teacher.
+2. Open `/teacher/questions/import`.
+3. Open `docs/sample-question-import.json`.
+4. Copy the full JSON array.
+5. Paste it into the import page textarea.
+6. Click **Validate JSON**.
+7. Confirm the page reports that 3 questions are ready to import.
+8. Click **Import**.
+9. Confirm the success message shows 3 imported questions.
+10. Go back to the Question Bank.
+11. Confirm these imported questions appear:
+    - Find Maximum Value
+    - Sum Positive Numbers
+    - Count Even Numbers
+12. Open each imported question and review the prompt, starter code, method signature, and test cases.
+13. Create an assignment using one imported question.
+14. Assign it to a dry run class.
+15. Log in with a student account.
+16. Confirm the assignment is visible.
+17. Solve one imported question.
+18. Run public tests.
+19. Submit the final answer.
+20. Confirm the teacher can see the submission and analytics afterward.

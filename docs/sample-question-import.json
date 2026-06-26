@@ -1,0 +1,131 @@
+[
+  {
+    "title": "Find Maximum Value",
+    "description": "Write a method that returns the largest value in the array nums. You may assume nums has at least one element.",
+    "course": "AP_CSA",
+    "unit": "Array",
+    "topic": "Array traversal",
+    "skill": "Traversing arrays",
+    "difficulty": "easy",
+    "starter_code": "public class Solution {\n    public int solve(int[] nums) {\n        // Write your code here\n        return 0;\n    }\n}",
+    "method_signature": "public int solve(int[] nums)",
+    "estimated_minutes": 10,
+    "source": "Teacher-created AP CSA practice",
+    "test_cases": [
+      {
+        "name": "public positive values",
+        "input_json": "{\"nums\":[1,2,3]}",
+        "expected_output": "3",
+        "points": 2,
+        "hidden": false
+      },
+      {
+        "name": "public max in middle",
+        "input_json": "{\"nums\":[4,9,2,5]}",
+        "expected_output": "9",
+        "points": 2,
+        "hidden": false
+      },
+      {
+        "name": "hidden negative values",
+        "input_json": "{\"nums\":[-5,-2,-9]}",
+        "expected_output": "-2",
+        "points": 3,
+        "hidden": true
+      },
+      {
+        "name": "hidden single value",
+        "input_json": "{\"nums\":[42]}",
+        "expected_output": "42",
+        "points": 3,
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "title": "Sum Positive Numbers",
+    "description": "Write a method that returns the sum of all positive values in the array nums. Ignore zero and negative values.",
+    "course": "AP_CSA",
+    "unit": "Array",
+    "topic": "Array traversal",
+    "skill": "Accumulating values",
+    "difficulty": "easy",
+    "starter_code": "public class Solution {\n    public int solve(int[] nums) {\n        // Write your code here\n        return 0;\n    }\n}",
+    "method_signature": "public int solve(int[] nums)",
+    "estimated_minutes": 10,
+    "source": "Teacher-created AP CSA practice",
+    "test_cases": [
+      {
+        "name": "public mixed values",
+        "input_json": "{\"nums\":[1,-2,3,0]}",
+        "expected_output": "4",
+        "points": 2,
+        "hidden": false
+      },
+      {
+        "name": "public all positive",
+        "input_json": "{\"nums\":[2,4,6]}",
+        "expected_output": "12",
+        "points": 2,
+        "hidden": false
+      },
+      {
+        "name": "hidden no positives",
+        "input_json": "{\"nums\":[0,-1,-7]}",
+        "expected_output": "0",
+        "points": 3,
+        "hidden": true
+      },
+      {
+        "name": "hidden single positive",
+        "input_json": "{\"nums\":[-3,8,-2]}",
+        "expected_output": "8",
+        "points": 3,
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "title": "Count Even Numbers",
+    "description": "Write a method that returns the number of even values in the array nums. Zero should be counted as even.",
+    "course": "AP_CSA",
+    "unit": "Array",
+    "topic": "Array traversal",
+    "skill": "Counting with conditions",
+    "difficulty": "easy",
+    "starter_code": "public class Solution {\n    public int solve(int[] nums) {\n        // Write your code here\n        return 0;\n    }\n}",
+    "method_signature": "public int solve(int[] nums)",
+    "estimated_minutes": 10,
+    "source": "Teacher-created AP CSA practice",
+    "test_cases": [
+      {
+        "name": "public mixed parity",
+        "input_json": "{\"nums\":[1,2,3,4]}",
+        "expected_output": "2",
+        "points": 2,
+        "hidden": false
+      },
+      {
+        "name": "public includes zero",
+        "input_json": "{\"nums\":[0,5,8]}",
+        "expected_output": "2",
+        "points": 2,
+        "hidden": false
+      },
+      {
+        "name": "hidden all odd",
+        "input_json": "{\"nums\":[1,3,5,7]}",
+        "expected_output": "0",
+        "points": 3,
+        "hidden": true
+      },
+      {
+        "name": "hidden negative evens",
+        "input_json": "{\"nums\":[-4,-3,-2,-1]}",
+        "expected_output": "2",
+        "points": 3,
+        "hidden": true
+      }
+    ]
+  }
+]
