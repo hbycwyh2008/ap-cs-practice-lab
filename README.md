@@ -669,6 +669,90 @@ Complete package for small-scale beta testing with AP CSA teachers:
 - Beta trial begins upon teacher confirmation
 - Feedback due within 1 week of trial completion
 
+## Milestone 3.7: Real Deployment Decision
+
+**Deployment strategy evaluation** for small-scale beta trial.
+
+### Deployment Approach
+
+**Recommended for First Beta:**
+
+🎯 **Single VPS + Docker Compose**
+
+For the first small-scale beta trial (3-5 teachers, 5-20 students per teacher), deploy all components on one Virtual Private Server using the same Docker Compose setup as local development.
+
+**Why this is the right choice:**
+- ✅ Proven to work (identical to local dev stack)
+- ✅ Java runner constraint satisfied (Docker socket access)
+- ✅ Simple operations (one machine to manage)
+- ✅ Adequate scale for beta (3-5 teachers)
+- ✅ Low cost (~$20-50/month VPS)
+- ✅ Fast iteration for fixes and updates
+
+### Deployment Documentation
+
+Comprehensive deployment evaluation and planning:
+
+- **[Deployment Options](docs/DEPLOYMENT_OPTIONS.md)** - Complete evaluation of deployment strategies
+  - Current architecture summary
+  - Option A: Local demo only
+  - Option B: Single VPS + Docker Compose (recommended)
+  - Option C: Frontend hosted separately + Backend on VPS
+  - Option D: PaaS platforms (must verify Java runner support)
+  - Option E: Remote runner service (future architecture)
+  - Decision matrix and final recommendation
+
+- **[VPS Beta Deployment Plan](docs/VPS_BETA_DEPLOYMENT_PLAN.md)** - High-level deployment guide
+  - VPS preparation (Docker, firewall, repository)
+  - Environment variable configuration
+  - Service startup and initialization
+  - Verification checklist
+  - Safety reminders and monitoring
+  - Common issues and troubleshooting
+
+### Key Deployment Constraint
+
+**⚠️ CRITICAL:** The **Java runner** is the key deployment constraint.
+
+**Deployment platform must support:**
+- Docker socket access (`/var/run/docker.sock`), OR
+- Spawning temporary containers for code execution, OR
+- Equivalent secure container execution strategy
+
+**Why this matters:**
+- Many PaaS platforms restrict Docker-in-Docker for security
+- Java auto-grading requires isolated container execution
+- Without Docker support, platform cannot grade submissions
+
+**Before choosing a deployment platform:**
+1. Verify Docker socket access or equivalent
+2. Test Java runner functionality
+3. Evaluate resource and cost constraints
+
+### Post-Beta Architecture Evolution
+
+**After successful beta trial**, consider:
+
+- **If scaling needed:** Remote runner service (separate execution backend)
+- **If frontend performance matters:** CDN-hosted frontend with backend on VPS
+- **If operations are hard:** Re-evaluate PaaS (only if runner constraints verified)
+- **If beta succeeded:** Expand teacher count gradually on same VPS setup
+
+### Beta Trial Parameters
+
+**Recommended scale:**
+- 3-5 teachers
+- 5-20 students per teacher (max ~100 total)
+- 2-4 weeks duration
+- 1-2 assignments per teacher
+- AP CSA array FRQ only
+
+**Do not scale beyond this** until:
+- ✅ Runner security validated
+- ✅ Database backup strategy tested
+- ✅ Monitoring and alerting in place
+- ✅ Beta feedback collected and prioritized
+
 ### Question tags
 
 Each question now includes:
