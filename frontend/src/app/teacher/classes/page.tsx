@@ -1,156 +1,180 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { api, SchoolClass, StudentAccountInfo } from "@/lib/api";
+import { api, SchoolClass } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { Navbar } from "@/components/navbar";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Users, Plus, ArrowRight, GraduationCap } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { EmptyState } from "@/components/empty-state";
 
-export default function TeacherClassesPage() {
+export default function ClassesPage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
   const [classes, setClasses] = useState<SchoolClass[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", school_year: "2026-2027" });
-  const [expandedClass, setExpandedClass] = useState<number | null>(null);
-  const [bulkCount, setBulkCount] = useState(10);
-  const [createdAccounts, setCreatedAccounts] = useState<StudentAccountInfo[] | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const load = () => api.getClasses().then(setClasses).catch(console.error);
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
-    if (user?.role === "teacher") load();
-  }, [user]);
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await api.createClass(form);
-    setShowForm(false);
-    load();
-  };
-
-  const handleBulkCreate = async (classId: number) => {
-    setBusy(true);
-    setCreatedAccounts(null);
-    try {
-      const result = await api.bulkCreateStudents(classId, { count: bulkCount });
-      setCreatedAccounts(result.created);
-      load(); // Refresh to update student_count
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to create students");
-    } finally {
-      setBusy(false);
+    if (!loading && (!user || user.role !== "teacher")) {
+      router.push("/dashboard");
     }
-  };
-
-  const downloadCSV = (classId: number) => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (token) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/classes/${classId}/students/export.csv`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.blob())
-        .then((blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `class_${classId}_students.csv`;
-          a.click();
-        });
+    if (user && user.role === "teacher") {
+      api
+        .getClasses()
+        .then(setClasses)
+        .finally(() => setLoadingData(false));
     }
-  };
+  }, [user, loading, router]);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (!user || user.role !== "teacher") return <div className="p-8">Access denied</div>;
+  if (loading || loadingData) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-muted-foreground">Loading classes...</p>
+        </div>
+      </>
+    );
+  }
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">My Classes</h1>
-        <button onClick={() => setShowForm(!showForm)} className="bg-blue-600 text-white px-4 py-2 rounded-md">
-          + New Class
-        </button>
-      </div>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          <PageHeader
+            title="Your Classes"
+            description="Manage your classes and student rosters"
+            icon={Users}
+            action={
+              <Button asChild>
+                <Link href="/teacher/classes/new">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Class
+                </Link>
+              </Button>
+            }
+          />
 
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-        <p className="text-sm text-amber-800">
-          <strong>Beta Trial Tip:</strong> Use anonymized student accounts for testing. 
-          Bulk-create generates demo accounts like <code>student-001@class-1.demo</code> with temporary passwords.
-          <Link href="/beta-notice" className="ml-2 text-blue-600 hover:underline">Learn more</Link>
-        </p>
-      </div>
-
-      {showForm && (
-        <form onSubmit={handleCreate} className="bg-white rounded-lg shadow p-4 mb-6 space-y-3">
-          <input placeholder="Class name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border rounded px-3 py-2" required />
-          <input placeholder="School year" value={form.school_year} onChange={(e) => setForm({ ...form, school_year: e.target.value })} className="w-full border rounded px-3 py-2" required />
-          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md">Create</button>
-        </form>
-      )}
-
-      <div className="space-y-4">
-        {classes.map((c) => (
-          <div key={c.id} className="bg-white rounded-lg shadow p-4">
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <h3 className="font-semibold text-lg">{c.name}</h3>
-                <p className="text-sm text-gray-500">{c.school_year} · {c.student_count || 0} students</p>
-              </div>
-              <button
-                onClick={() => setExpandedClass(expandedClass === c.id ? null : c.id)}
-                className="text-sm text-blue-600 hover:underline"
-              >
-                {expandedClass === c.id ? "Hide" : "Manage Students"}
-              </button>
-            </div>
-
-            {expandedClass === c.id && (
-              <div className="mt-4 pt-4 border-t space-y-4">
-                <div className="flex gap-3 items-end">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Student Count</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={bulkCount}
-                      onChange={(e) => setBulkCount(Number(e.target.value))}
-                      className="border rounded px-3 py-2 w-24"
-                    />
-                  </div>
-                  <button
-                    onClick={() => handleBulkCreate(c.id)}
-                    disabled={busy}
-                    className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
-                  >
-                    {busy ? "Creating..." : "Bulk Create Students"}
-                  </button>
-                  <button
-                    onClick={() => downloadCSV(c.id)}
-                    className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
-                  >
-                    Download Student CSV
-                  </button>
-                </div>
-
-                {createdAccounts && createdAccounts.length > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="font-medium mb-2">✅ Created {createdAccounts.length} accounts. Copy these credentials now (they won't be shown again):</p>
-                    <div className="max-h-60 overflow-y-auto space-y-2">
-                      {createdAccounts.map((acc) => (
-                        <div key={acc.id} className="bg-white rounded p-2 text-sm font-mono">
-                          <div><strong>Name:</strong> {acc.name}</div>
-                          <div><strong>Email:</strong> {acc.email}</div>
-                          <div><strong>Password:</strong> {acc.temporary_password}</div>
-                        </div>
-                      ))}
+          {classes.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="No classes yet"
+              description="Create your first class to start managing students and assignments"
+              action={
+                <Button asChild>
+                  <Link href="/teacher/classes/new">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create First Class
+                  </Link>
+                </Button>
+              }
+            />
+          ) : (
+            <>
+              {/* Stats Overview */}
+              <div className="grid sm:grid-cols-3 gap-6">
+                <Card className="border-2 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium text-blue-700">
+                        Total Classes
+                      </CardTitle>
+                      <GraduationCap className="w-5 h-5 text-blue-600" />
                     </div>
-                  </div>
-                )}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-bold text-blue-900">
+                      {classes.length}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 shadow-lg bg-gradient-to-br from-green-50 to-green-100">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium text-green-700">
+                        Total Students
+                      </CardTitle>
+                      <Users className="w-5 h-5 text-green-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-bold text-green-900">
+                      {classes.reduce((sum, c) => sum + (c.student_count || 0), 0)}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium text-purple-700">
+                        Average Class Size
+                      </CardTitle>
+                      <Users className="w-5 h-5 text-purple-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-bold text-purple-900">
+                      {classes.length > 0
+                        ? Math.round(
+                            classes.reduce((sum, c) => sum + (c.student_count || 0), 0) /
+                              classes.length
+                          )
+                        : 0}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            )}
-          </div>
-        ))}
+
+              {/* Classes Grid */}
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {classes.map((c) => (
+                  <Card
+                    key={c.id}
+                    className="border-2 shadow-lg hover:shadow-xl transition-all group"
+                  >
+                    <CardHeader className="bg-gradient-to-br from-slate-50 to-blue-50">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
+                            {c.name}
+                          </CardTitle>
+                          <CardDescription className="mt-2 flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            {c.student_count || 0} students
+                          </CardDescription>
+                        </div>
+                        <Badge variant="secondary">Active</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <Button asChild className="w-full group">
+                        <Link href={`/teacher/classes/${c.id}`}>
+                          View Class Details
+                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

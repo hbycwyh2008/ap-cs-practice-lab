@@ -972,22 +972,38 @@ Current scope: **AP_CSA** / **FRQ_CODE** / `public int solve(int[] nums)` only.
 - Button, Card, Input, Textarea, Label, Badge, Alert, Table, Separator, Tabs
 
 **Custom Reusable Components:**
-- `PageHeader`, `StatCard`, `EmptyState`, `StatusBadge`, `DemoAccountCard`, `BetaNoticeCard`
+- `PageHeader`, `StatCard`, `EmptyState`, `StatusBadge`, `DemoAccountCard`, `BetaNoticeCard`, `Navbar`
 
-### Redesigned Pages
+### Visual Impact Redesign Pass
 
-**1. Landing Page** - Hero, features, beta scope, workflows, privacy messaging  
-**2. Login Page** - Two-column layout with demo credentials  
-**3. Teacher Dashboard** - Beta demo flow, analytics tables, stat cards  
-**4. Student Coding Page** - Tabbed interface (Problem/Results) with two-column editor layout
+**Comprehensive UI overhaul** to make the platform look like a polished, professional education SaaS product.
 
-### Visual Design
+**Core Navigation:**
+- **Navbar Component** - Sticky navigation with logo, role badges, beta indicators, and context-aware links
 
-- Clean, modern education SaaS aesthetic
-- Soft slate gradients and blue accents
-- Professional typography and spacing
-- Suitable for beta demos and screen recording
-- High contrast, clear hierarchy
+**Hero Pages (Full Redesign):**
+- **Landing Page** - Two-column hero with fake dashboard preview, feature grid with icons, strong CTAs
+- **Login Page** - Premium two-column split with gradient background and value proposition
+- **Dashboard (Teacher)** - Enhanced stat cards with icons, beta demo quick-start flow, polished analytics links
+- **Dashboard (Student)** - Progress tracking, assignment completion visualization
+
+**Second-Tier Pages:**
+- **Teacher Classes** - Grid layout with stats overview, polished class cards
+- **Teacher Questions** - Separated active/archived sections, enhanced visual hierarchy
+- **Student Assignments** - Progress bars, completion badges, clearer due date warnings
+
+**Student Coding Page:**
+- **Tabs Interface** - Problem/Results tabbed layout for better focus
+- **Two-column layout** - Problem statement and code editor side-by-side
+
+### Visual Design System
+
+- **Color Palette:** Gradient backgrounds from slate to blue to indigo
+- **Component Style:** Rounded corners, subtle shadows, smooth hover transitions
+- **Typography:** Strong hierarchy with bold headings and clear descriptions
+- **Icons:** Lucide React icons for visual anchors throughout the UI
+- **Stat Cards:** Color-coded gradient backgrounds (blue, green, purple, amber)
+- **Empty States:** Friendly illustrations and clear CTAs
 
 **No Breaking Changes:** All existing functionality preserved. Smoke test passes: ✅
 

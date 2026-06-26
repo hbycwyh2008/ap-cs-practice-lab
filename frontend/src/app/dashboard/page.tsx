@@ -1,473 +1,506 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { api, SchoolClass, Assignment } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { api, DashboardStats, TeacherAnalytics } from "@/lib/api";
-import { PageHeader } from "@/components/page-header";
-import { StatCard } from "@/components/stat-card";
-import { EmptyState } from "@/components/empty-state";
+import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { StatusBadge } from "@/components/status-badge";
+import {
+  Users,
+  BookOpen,
+  FileCheck,
+  TrendingUp,
+  Sparkles,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  ArrowRight,
+  BarChart3,
+} from "lucide-react";
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [analytics, setAnalytics] = useState<TeacherAnalytics | null>(null);
+  const router = useRouter();
+  const [classes, setClasses] = useState<SchoolClass[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [studentAvgScore, setStudentAvgScore] = useState<number>(0);
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-    api.getDashboard().then(setStats).catch(console.error);
-    if (user.role === "teacher") {
-      api.getAnalytics().then(setAnalytics).catch(console.error);
+    if (!loading && !user) {
+      router.push("/login");
     }
-  }, [user]);
+    if (user && user.role === "teacher") {
+      Promise.all([api.getClasses(), api.getAssignments()])
+        .then(([c, a]) => {
+          setClasses(c);
+          setAssignments(a);
+        })
+        .finally(() => setLoadingData(false));
+    } else if (user && user.role === "student") {
+      api
+        .getStudentAssignments()
+        .then((a) => {
+          setAssignments(a);
+          const scores = a.flatMap((asn) =>
+            asn.questions
+              ?.filter((q) => q.score !== null)
+              .map((q) => (q.score! / q.max_score) * 100) || []
+          );
+          const avg =
+            scores.length > 0
+              ? scores.reduce((sum, s) => sum + s, 0) / scores.length
+              : 0;
+          setStudentAvgScore(avg);
+        })
+        .finally(() => setLoadingData(false));
+    }
+  }, [user, loading, router]);
 
-  if (loading) {
+  if (loading || loadingData) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
+      <>
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </>
     );
   }
 
-  if (!user) {
-    return (
-      <div className="container max-w-6xl mx-auto p-6">
-        <Alert>
-          <AlertDescription>
-            Please{" "}
-            <Link href="/login" className="text-primary hover:underline font-semibold">
-              login
-            </Link>{" "}
-            to view your dashboard
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+  if (!user) return null;
+
+  const isTeacher = user.role === "teacher";
 
   return (
-    <div className="container max-w-7xl mx-auto p-6 space-y-8">
-      <PageHeader
-        title="Dashboard"
-        description={
-          user.role === "teacher"
-            ? "Monitor AP CSA practice activity, completion rates, and student progress"
-            : "View your assignments and track your progress"
-        }
-        badge={user.role === "teacher" ? "Teacher" : "Student"}
-        action={
-          <Button variant="outline" asChild>
-            <Link href="/beta-notice">Beta Notice</Link>
-          </Button>
-        }
-      />
-
-      {user.role === "teacher" && stats && (
-        <>
-          {/* Beta Demo Flow */}
-          <Alert className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-            <AlertTitle className="text-lg font-semibold">
-              Beta Demo Flow
-            </AlertTitle>
-            <AlertDescription className="mt-3 space-y-3">
-              <ol className="space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <Badge variant="outline" className="mt-0.5">1</Badge>
-                  <span>Create or open a class</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Badge variant="outline" className="mt-0.5">2</Badge>
-                  <span>Bulk-create anonymized students</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Badge variant="outline" className="mt-0.5">3</Badge>
-                  <span>Create or auto-generate an assignment</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Badge variant="outline" className="mt-0.5">4</Badge>
-                  <span>Ask students to run public tests and submit final answers</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Badge variant="outline" className="mt-0.5">5</Badge>
-                  <span>Review analytics and export CSV</span>
-                </li>
-              </ol>
-              <div className="flex gap-3 flex-wrap pt-2">
-                <Button asChild>
-                  <Link href="/teacher/classes">Manage Classes</Link>
-                </Button>
-                <Button variant="secondary" asChild>
-                  <Link href="/teacher/assignments">Create Assignment</Link>
-                </Button>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          {/* Page Header */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <h1 className="text-4xl font-bold text-slate-900">
+                  {isTeacher ? "Teacher Dashboard" : "Student Dashboard"}
+                </h1>
+                <Badge className="bg-blue-600">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  Beta
+                </Badge>
+              </div>
+              <p className="text-lg text-slate-600">
+                Welcome back, <span className="font-semibold">{user.email}</span>
+              </p>
+            </div>
+            {isTeacher && (
+              <div className="flex gap-3">
                 <Button variant="outline" asChild>
-                  <Link href="/teacher/questions">Question Bank</Link>
+                  <Link href="/teacher/questions">
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    Questions
+                  </Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/teacher/assignments/new">
+                    <FileCheck className="w-4 h-4 mr-2" />
+                    New Assignment
+                  </Link>
                 </Button>
               </div>
-            </AlertDescription>
-          </Alert>
-
-          {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard
-              label="Classes"
-              value={stats.class_count}
-              description="Active teaching classes"
-              href="/teacher/classes"
-            />
-            <StatCard
-              label="Questions"
-              value={stats.question_count}
-              description="Questions in your bank"
-              href="/teacher/questions"
-            />
-            <StatCard
-              label="Assignments"
-              value={stats.assignment_count}
-              description="Published assignments"
-              href="/teacher/assignments"
-            />
+            )}
           </div>
 
-          {analytics && (
+          {/* Teacher Dashboard */}
+          {isTeacher && (
             <>
-              {/* Assignment Completion */}
-              {analytics.assignment_stats.length > 0 ? (
-                <Card>
+              {/* Stat Cards */}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card className="border-2 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium text-blue-700">
+                        Total Classes
+                      </CardTitle>
+                      <Users className="w-5 h-5 text-blue-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-bold text-blue-900">
+                      {classes.length}
+                    </div>
+                    <p className="text-xs text-blue-600 mt-2">
+                      {classes.reduce((sum, c) => sum + (c.student_count || 0), 0)}{" "}
+                      students enrolled
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 shadow-lg bg-gradient-to-br from-green-50 to-green-100">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium text-green-700">
+                        Active Assignments
+                      </CardTitle>
+                      <FileCheck className="w-5 h-5 text-green-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-bold text-green-900">
+                      {assignments.length}
+                    </div>
+                    <p className="text-xs text-green-600 mt-2">
+                      {assignments.reduce((sum, a) => sum + (a.questions?.length || 0), 0)}{" "}
+                      total questions
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium text-purple-700">
+                        Platform Status
+                      </CardTitle>
+                      <TrendingUp className="w-5 h-5 text-purple-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-6 h-6 text-purple-600" />
+                      <span className="text-2xl font-bold text-purple-900">
+                        All Systems Go
+                      </span>
+                    </div>
+                    <p className="text-xs text-purple-600 mt-2">
+                      Auto-grading active
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Beta Demo Flow Card */}
+              <Card className="border-2 shadow-xl bg-gradient-to-br from-amber-50 to-amber-100">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-amber-600" />
+                    <CardTitle className="text-xl">Beta Demo Quick Start</CardTitle>
+                  </div>
+                  <CardDescription className="text-amber-700">
+                    Follow these steps to explore the platform
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      {
+                        num: 1,
+                        title: "View Classes",
+                        desc: "Check your existing classes",
+                        href: "/teacher/classes",
+                      },
+                      {
+                        num: 2,
+                        title: "Browse Questions",
+                        desc: "Explore the question bank",
+                        href: "/teacher/questions",
+                      },
+                      {
+                        num: 3,
+                        title: "Create Assignment",
+                        desc: "Auto-generate or manual",
+                        href: "/teacher/assignments/new",
+                      },
+                      {
+                        num: 4,
+                        title: "View Submissions",
+                        desc: "Track student progress",
+                        href: "/teacher/submissions",
+                      },
+                    ].map((step) => (
+                      <Link
+                        key={step.num}
+                        href={step.href}
+                        className="block p-4 bg-white rounded-lg border-2 border-amber-200 hover:border-amber-400 hover:shadow-md transition-all group"
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-8 h-8 bg-amber-500 text-white rounded-full flex items-center justify-center font-bold">
+                            {step.num}
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-amber-600 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                        <h3 className="font-semibold text-slate-900 mb-1">
+                          {step.title}
+                        </h3>
+                        <p className="text-xs text-slate-600">{step.desc}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Classes and Assignments Grid */}
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Classes List */}
+                <Card className="border-2 shadow-lg">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle>Assignment Completion Rates</CardTitle>
-                        <CardDescription>
-                          Track student progress across assignments
-                        </CardDescription>
+                      <div className="flex items-center gap-2">
+                        <Users className="w-5 h-5 text-blue-600" />
+                        <CardTitle>Your Classes</CardTitle>
                       </div>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          const token =
-                            typeof window !== "undefined"
-                              ? localStorage.getItem("token")
-                              : null;
-                          if (token) {
-                            fetch(
-                              `${
-                                process.env.NEXT_PUBLIC_API_URL ||
-                                "http://localhost:8000"
-                              }/analytics/export.csv`,
-                              {
-                                headers: { Authorization: `Bearer ${token}` },
-                              }
-                            )
-                              .then((res) => res.blob())
-                              .then((blob) => {
-                                const url = window.URL.createObjectURL(blob);
-                                const a = document.createElement("a");
-                                a.href = url;
-                                a.download = "analytics_export.csv";
-                                a.click();
-                              });
-                          }
-                        }}
-                      >
-                        Export CSV
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/teacher/classes">View All</Link>
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Assignment</TableHead>
-                          <TableHead className="text-center">Total</TableHead>
-                          <TableHead className="text-center">Attempted</TableHead>
-                          <TableHead className="text-center">Completed</TableHead>
-                          <TableHead className="text-center">Attempt %</TableHead>
-                          <TableHead className="text-center">Complete %</TableHead>
-                          <TableHead className="text-center">Not Completed</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {analytics.assignment_stats.map((stat) => (
-                          <TableRow key={stat.assignment_id}>
-                            <TableCell className="font-medium">
-                              <Link
-                                href="/teacher/assignments"
-                                className="text-primary hover:underline"
-                              >
-                                {stat.title}
-                              </Link>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {stat.total_students}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {stat.attempted_students}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {stat.completed_students}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge
-                                variant={
-                                  stat.attempt_rate >= 80
-                                    ? "default"
-                                    : stat.attempt_rate >= 50
-                                    ? "outline"
-                                    : "destructive"
-                                }
-                              >
-                                {stat.attempt_rate}%
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge
-                                variant={
-                                  stat.completion_rate >= 80
-                                    ? "default"
-                                    : stat.completion_rate >= 50
-                                    ? "outline"
-                                    : "destructive"
-                                }
-                              >
-                                {stat.completion_rate}%
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-center text-sm">
-                              {stat.not_completed_students.length === 0 ? (
-                                <Badge variant="default">All completed</Badge>
-                              ) : (
-                                <span
-                                  className="text-muted-foreground"
-                                  title={stat.not_completed_students
-                                    .map((s) => s.display_name)
-                                    .join(", ")}
-                                >
-                                  {stat.not_completed_students
-                                    .slice(0, 3)
-                                    .map((s) => s.display_name)
-                                    .join(", ")}
-                                  {stat.not_completed_students.length > 3 &&
-                                    ` +${
-                                      stat.not_completed_students.length - 3
-                                    } more`}
-                                </span>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              {/* Question Performance */}
-              {analytics.question_stats.length > 0 &&
-              analytics.question_stats.some((q) => q.submission_count > 0) ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Question Performance</CardTitle>
-                    <CardDescription>
-                      Average scores and pass rates by question
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Question</TableHead>
-                          <TableHead className="text-center">Unit</TableHead>
-                          <TableHead className="text-center">Skill</TableHead>
-                          <TableHead className="text-center">Submissions</TableHead>
-                          <TableHead className="text-center">Avg Score</TableHead>
-                          <TableHead className="text-center">Pass Rate</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {analytics.question_stats
-                          .filter((q) => q.submission_count > 0)
-                          .map((stat) => (
-                            <TableRow key={stat.question_id}>
-                              <TableCell className="font-medium">
-                                {stat.title}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Badge variant="outline">{stat.unit}</Badge>
-                              </TableCell>
-                              <TableCell className="text-center text-muted-foreground">
-                                {stat.skill || "—"}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                {stat.submission_count}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Badge
-                                  variant={
-                                    stat.avg_score >= 80
-                                      ? "default"
-                                      : stat.avg_score >= 60
-                                      ? "outline"
-                                      : "destructive"
-                                  }
-                                >
-                                  {stat.avg_score}%
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Badge
-                                  variant={
-                                    stat.pass_rate >= 80
-                                      ? "default"
-                                      : stat.pass_rate >= 50
-                                      ? "outline"
-                                      : "destructive"
-                                  }
-                                >
-                                  {stat.pass_rate}%
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              {/* Skill Aggregation */}
-              {analytics.skill_stats.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Performance by Skill</CardTitle>
-                    <CardDescription>
-                      Average scores grouped by skill category
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {analytics.skill_stats.map((stat) => (
-                        <Card key={stat.skill} className="border-2">
-                          <CardContent className="pt-6">
-                            <div className="flex justify-between items-start mb-4">
-                              <h3 className="font-semibold text-lg">
-                                {stat.skill}
+                    {classes.length === 0 ? (
+                      <div className="text-center py-8 text-slate-500">
+                        <Users className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                        <p>No classes yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {classes.slice(0, 5).map((c) => (
+                          <Link
+                            key={c.id}
+                            href={`/teacher/classes/${c.id}`}
+                            className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-lg border transition-colors group"
+                          >
+                            <div>
+                              <h3 className="font-semibold text-slate-900 group-hover:text-blue-600">
+                                {c.name}
                               </h3>
-                              <Badge variant="outline">
-                                {stat.question_count} Q
-                              </Badge>
+                              <p className="text-sm text-slate-500">
+                                {c.student_count || 0} students
+                              </p>
                             </div>
-                            <div className="text-3xl font-bold text-primary">
-                              {stat.avg_score}%
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Average Score
-                            </p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
+                            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              )}
+
+                {/* Recent Assignments */}
+                <Card className="border-2 shadow-lg">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileCheck className="w-5 h-5 text-green-600" />
+                        <CardTitle>Recent Assignments</CardTitle>
+                      </div>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/teacher/assignments">View All</Link>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {assignments.length === 0 ? (
+                      <div className="text-center py-8 text-slate-500">
+                        <FileCheck className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                        <p>No assignments yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {assignments.slice(0, 5).map((a) => (
+                          <Link
+                            key={a.id}
+                            href={`/teacher/assignments/${a.id}`}
+                            className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-lg border transition-colors group"
+                          >
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-slate-900 group-hover:text-green-600">
+                                {a.title}
+                              </h3>
+                              <p className="text-sm text-slate-500">
+                                {a.questions?.length || 0} questions · Due{" "}
+                                {new Date(a.due_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all" />
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Analytics Quick Link */}
+              <Card className="border-2 shadow-lg bg-gradient-to-br from-indigo-50 to-purple-50">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-indigo-600" />
+                    <CardTitle>Teacher Analytics</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Track assignment completion and student performance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="w-full sm:w-auto">
+                    <Link href="/teacher/analytics">
+                      View Analytics Dashboard
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
             </>
           )}
-        </>
-      )}
 
-      {user.role === "student" && stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <StatCard
-            label="Assignments"
-            value={stats.assignment_count}
-            description="Available practice assignments"
-            href="/student/assignments"
-          />
-          <StatCard
-            label="Average Score"
-            value={
-              stats.average_score !== null ? `${stats.average_score}%` : "N/A"
-            }
-            description="Across all submissions"
-          />
-        </div>
-      )}
+          {/* Student Dashboard */}
+          {!isTeacher && (
+            <>
+              {/* Student Stats */}
+              <div className="grid sm:grid-cols-2 gap-6">
+                <Card className="border-2 shadow-lg bg-gradient-to-br from-green-50 to-green-100">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium text-green-700">
+                        My Assignments
+                      </CardTitle>
+                      <FileCheck className="w-5 h-5 text-green-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-bold text-green-900">
+                      {assignments.length}
+                    </div>
+                    <p className="text-xs text-green-600 mt-2">
+                      {assignments.reduce((sum, a) => sum + (a.questions?.length || 0), 0)}{" "}
+                      total questions
+                    </p>
+                  </CardContent>
+                </Card>
 
-      {/* Recent Submissions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Submissions</CardTitle>
-          <CardDescription>
-            Latest practice runs and final submissions
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!stats || stats.recent_submissions.length === 0 ? (
-            <EmptyState
-              title="No submissions yet"
-              description={
-                user.role === "teacher"
-                  ? "Student submissions will appear here once they start practicing"
-                  : "Your submissions will appear here after you start practicing"
-              }
-            />
-          ) : (
-            <div className="space-y-3">
-              {stats.recent_submissions.map((sub) => (
-                <div
-                  key={sub.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                >
-                  <div className="space-y-1">
-                    <p className="font-medium">
-                      {sub.question_title || `Question #${sub.question_id}`}
+                <Card className="border-2 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium text-blue-700">
+                        Average Score
+                      </CardTitle>
+                      <TrendingUp className="w-5 h-5 text-blue-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-bold text-blue-900">
+                      {studentAvgScore.toFixed(0)}%
+                    </div>
+                    <p className="text-xs text-blue-600 mt-2">
+                      Across all submissions
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {sub.student_name && `${sub.student_name} · `}
-                      {new Date(sub.created_at).toLocaleString()}
-                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Assignments List */}
+              <Card className="border-2 shadow-lg">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <FileCheck className="w-5 h-5 text-green-600" />
+                    <CardTitle>Your Assignments</CardTitle>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="text-lg font-semibold">
-                        {sub.score}/{sub.max_score}
+                  <CardDescription>
+                    Click on an assignment to start practicing
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {assignments.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500">
+                      <FileCheck className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+                      <p className="text-lg font-medium">No assignments yet</p>
+                      <p className="text-sm">
+                        Your teacher will assign practice problems soon
                       </p>
-                      <p className="text-xs text-muted-foreground">points</p>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <StatusBadge status={sub.status} />
-                      {sub.is_final ? (
-                        <Badge variant="default">Final</Badge>
-                      ) : (
-                        <Badge variant="outline">Practice</Badge>
-                      )}
+                  ) : (
+                    <div className="space-y-4">
+                      {assignments.map((a) => {
+                        const completed = a.questions?.filter(q => q.score !== null).length || 0;
+                        const total = a.questions?.length || 0;
+                        const completionRate = total > 0 ? (completed / total) * 100 : 0;
+                        const isOverdue = new Date(a.due_at) < new Date();
+
+                        return (
+                          <Link
+                            key={a.id}
+                            href={`/student/assignments/${a.id}`}
+                            className="block p-6 bg-slate-50 hover:bg-slate-100 rounded-lg border-2 hover:border-blue-300 transition-all group"
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <h3 className="text-xl font-semibold text-slate-900 group-hover:text-blue-600">
+                                  {a.title}
+                                </h3>
+                                <p className="text-sm text-slate-500 mt-1">
+                                  {total} questions
+                                </p>
+                              </div>
+                              <ArrowRight className="w-6 h-6 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-2">
+                                {completionRate === 100 ? (
+                                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                ) : isOverdue ? (
+                                  <AlertCircle className="w-5 h-5 text-red-600" />
+                                ) : (
+                                  <Clock className="w-5 h-5 text-amber-600" />
+                                )}
+                                <span className="text-sm font-medium text-slate-700">
+                                  {completed}/{total} completed
+                                </span>
+                              </div>
+                              <Badge variant={isOverdue ? "destructive" : "secondary"}>
+                                Due {new Date(a.due_at).toLocaleDateString()}
+                              </Badge>
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
           )}
-        </CardContent>
-      </Card>
-    </div>
+
+          {/* Beta Notice for All */}
+          <Alert className="bg-blue-50 border-blue-200">
+            <Sparkles className="h-4 w-4 text-blue-600" />
+            <AlertTitle className="text-blue-900 font-semibold">
+              Beta Platform Notice
+            </AlertTitle>
+            <AlertDescription className="text-blue-800">
+              This is a beta product for evaluation purposes. Use demo accounts
+              only. See{" "}
+              <Link
+                href="/beta-notice"
+                className="underline font-semibold hover:text-blue-900"
+              >
+                Beta Notice
+              </Link>{" "}
+              for full details.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    </>
   );
 }
