@@ -40,6 +40,7 @@ function QuestionSolver() {
   const [running, setRunning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [latestStatus, setLatestStatus] = useState("");
   const [activeTab, setActiveTab] = useState<string>("problem");
 
   useEffect(() => {
@@ -62,6 +63,7 @@ function QuestionSolver() {
     setRunning(true);
     setMessage("");
     setFeedback(null);
+    setLatestStatus("");
     try {
       const result = await api.runCode({
         question_id: Number(id),
@@ -71,6 +73,7 @@ function QuestionSolver() {
       setFeedback(result.feedback);
       setCompileOutput(result.compile_output || "");
       setRuntimeOutput(result.runtime_output || "");
+      setLatestStatus(result.status);
       setMessage(
         `Public tests: ${result.feedback.passed_tests}/${result.feedback.total_tests} passed (${result.score}/${result.max_score} pts)`
       );
@@ -91,6 +94,7 @@ function QuestionSolver() {
     setSubmitting(true);
     setMessage("");
     setFeedback(null);
+    setLatestStatus("");
     try {
       const result = await api.submitCode({
         question_id: Number(id),
@@ -108,6 +112,7 @@ function QuestionSolver() {
       }
       setCompileOutput(result.compile_output || "");
       setRuntimeOutput(result.runtime_output || "");
+      setLatestStatus(result.status);
       setMessage(
         `Submitted! Final Score: ${result.score}/${result.max_score} (${result.status})`
       );
@@ -241,6 +246,32 @@ function QuestionSolver() {
               </Alert>
             )}
 
+            {latestStatus === "failed_compile" && (
+              <Card className="border-red-200 bg-red-50">
+                <CardHeader>
+                  <CardTitle className="text-base text-red-900">
+                    How to read this compile error
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc pl-5 space-y-1 text-sm text-red-900">
+                    <li>Look at the line number first.</li>
+                    <li>Check for missing semicolons.</li>
+                    <li>
+                      Check parentheses in <code>for</code> loops and{" "}
+                      <code>if</code> statements.
+                    </li>
+                    <li>
+                      Java for-each syntax is{" "}
+                      <code>for (int num : nums)</code>, not{" "}
+                      <code>for num in nums</code>.
+                    </li>
+                    <li>Fix one error, then run public tests again.</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
             {runtimeOutput && !compileOutput && (
               <Alert className="border-yellow-200 bg-yellow-50">
                 <AlertTitle className="text-yellow-800">
@@ -348,6 +379,34 @@ function QuestionSolver() {
 
         {/* Right: Code Editor */}
         <div className="space-y-6">
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-base text-blue-900">
+                Java Reminders
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-blue-900">
+                <li>Do not change the required class name or method signature.</li>
+                <li>
+                  End Java statements with a semicolon <code>;</code>.
+                </li>
+                <li>
+                  To loop over an <code>int[]</code>, use:{" "}
+                  <code>for (int num : nums) {"{ ... }"}</code>
+                </li>
+                <li>
+                  For max/min array problems, consider starting from{" "}
+                  <code>nums[0]</code> instead of <code>0</code>.
+                </li>
+                <li>
+                  Public tests are only visible checks. Hidden tests may check
+                  edge cases.
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Your Solution</CardTitle>
