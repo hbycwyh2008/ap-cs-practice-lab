@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     java_runner_cpus: str = "0.5"
     java_runner_timeout: int = 5
     java_runner_pids_limit: int = 64
-    java_runner_tmp_dir: str = "/tmp/java-runs"
+    java_runner_tmp_dir: str = "/tmp/ap-cs-practice-lab-java-runs"
 
     class Config:
         env_file = ".env"

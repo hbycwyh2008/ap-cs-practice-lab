@@ -8,6 +8,7 @@ from app.auth import get_current_user, require_teacher
 from app.database import get_session
 from app.models import (
     Assignment,
+    AssignmentQuestion,
     Question,
     Submission,
     SubmissionStatus,
@@ -26,6 +27,21 @@ from app.schemas import (
 from app.services.java_runner import determine_status, run_tests
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
+
+
+def _ensure_question_in_assignment(
+    session: Session, assignment_id: int, question_id: int
+) -> None:
+    link = session.exec(
+        select(AssignmentQuestion).where(
+            AssignmentQuestion.assignment_id == assignment_id,
+            AssignmentQuestion.question_id == question_id,
+        )
+    ).first()
+    if not link:
+        raise HTTPException(
+            status_code=403, detail="Question is not part of this assignment"
+        )
 
 
 def _sanitize_feedback_for_student(feedback: FeedbackJson) -> FeedbackJson:
@@ -99,12 +115,13 @@ def run_submission(
         if current_user.class_id != assignment.class_id:
             raise HTTPException(status_code=403, detail="Access denied")
 
+    _ensure_question_in_assignment(session, data.assignment_id, data.question_id)
+
+    # Always load ALL test cases so max_score reflects the full question.
+    # run_tests only executes public tests when include_hidden=False.
     test_cases = session.exec(
         select(TestCase).where(TestCase.question_id == data.question_id)
     ).all()
-
-    if data.public_only:
-        test_cases = [tc for tc in test_cases if not tc.is_hidden]
 
     is_teacher = current_user.role == UserRole.TEACHER
     feedback, compile_output, runtime_output = run_tests(
@@ -162,6 +179,8 @@ def submit_final(
     if current_user.role == UserRole.STUDENT:
         if current_user.class_id != assignment.class_id:
             raise HTTPException(status_code=403, detail="Access denied")
+
+    _ensure_question_in_assignment(session, data.assignment_id, data.question_id)
 
     test_cases = session.exec(
         select(TestCase).where(TestCase.question_id == data.question_id)

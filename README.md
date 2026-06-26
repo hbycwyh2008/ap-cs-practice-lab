@@ -44,6 +44,9 @@ docker compose up --build -d
 
 # Seed demo data
 docker compose exec backend python seed.py
+
+# Verify the full core flow (teacher/student login -> submit -> 10/10)
+python scripts/smoke_test.py
 ```
 
 Or use the helper script (Linux/macOS):
@@ -54,6 +57,10 @@ chmod +x scripts/start.sh
 ```
 
 Open **http://localhost:3000** in your browser.
+
+> **Windows users:** run `docker compose` from a **WSL2** terminal. The backend
+> bind-mounts a host temp directory (`/tmp/ap-cs-practice-lab-java-runs`) that
+> the Docker daemon must resolve as a host path; WSL2 makes this work cleanly.
 
 ## Demo Accounts
 
@@ -157,6 +164,27 @@ The runner:
 5. Deletes the temp directory after completion
 
 Handled edge cases: compile errors, runtime exceptions, infinite loops (timeout), invalid output format.
+
+### Host temp directory (bind mount)
+
+The backend invokes `docker run` through the host Docker socket, so the per-run
+temp directory must be a path the Docker daemon can see on the **host**. The
+backend container and the host therefore share the same absolute path via a bind
+mount:
+
+```yaml
+backend:
+  environment:
+    JAVA_RUNNER_TMP_DIR: /tmp/ap-cs-practice-lab-java-runs
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /tmp/ap-cs-practice-lab-java-runs:/tmp/ap-cs-practice-lab-java-runs
+```
+
+Each grading run creates `/tmp/ap-cs-practice-lab-java-runs/<uuid>`, mounts it
+into the Java runner container, and deletes it afterward. This replaces the
+earlier named-volume approach, which the Docker daemon could not resolve to a
+host path.
 
 ## Current MVP Limitations
 

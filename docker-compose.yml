@@ -33,9 +33,10 @@ services:
       JAVA_RUNNER_CPUS: "0.5"
       JAVA_RUNNER_PIDS_LIMIT: "64"
       JAVA_RUNNER_TIMEOUT: "5"
+      JAVA_RUNNER_TMP_DIR: /tmp/ap-cs-practice-lab-java-runs
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - runner_tmp:/tmp/java-runs
+      - /tmp/ap-cs-practice-lab-java-runs:/tmp/ap-cs-practice-lab-java-runs
     depends_on:
       postgres:
         condition: service_healthy
@@ -57,4 +58,3 @@ services:
 
 volumes:
   postgres_data:
-  runner_tmp:
