@@ -4,6 +4,29 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { api, DashboardStats, TeacherAnalytics } from "@/lib/api";
+import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
+import { EmptyState } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { StatusBadge } from "@/components/status-badge";
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -18,225 +41,353 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>;
-  if (!user) return <div className="p-8 text-center">Please <Link href="/login" className="text-blue-600">login</Link></div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container max-w-6xl mx-auto p-6">
+        <Alert>
+          <AlertDescription>
+            Please{" "}
+            <Link href="/login" className="text-primary hover:underline font-semibold">
+              login
+            </Link>{" "}
+            to view your dashboard
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold mb-2">Dashboard</h1>
-        <p className="text-gray-600">Welcome, {user.name}!</p>
-      </div>
+    <div className="container max-w-7xl mx-auto p-6 space-y-8">
+      <PageHeader
+        title="Dashboard"
+        description={
+          user.role === "teacher"
+            ? "Monitor AP CSA practice activity, completion rates, and student progress"
+            : "View your assignments and track your progress"
+        }
+        badge={user.role === "teacher" ? "Teacher" : "Student"}
+        action={
+          <Button variant="outline" asChild>
+            <Link href="/beta-notice">Beta Notice</Link>
+          </Button>
+        }
+      />
 
       {user.role === "teacher" && stats && (
         <>
-          {/* Beta Demo Flow Card */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Beta Demo Flow</h2>
-            <ol className="space-y-2 text-sm text-gray-700 mb-4">
-              <li>1. Create or open a class</li>
-              <li>2. Bulk-create anonymized students</li>
-              <li>3. Create or auto-generate an assignment</li>
-              <li>4. Ask students to run public tests and submit final answers</li>
-              <li>5. Review analytics and export CSV</li>
-            </ol>
-            <div className="flex gap-3 flex-wrap">
-              <Link
-                href="/teacher/classes"
-                className="text-sm px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Classes
-              </Link>
-              <Link
-                href="/teacher/assignments"
-                className="text-sm px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-              >
-                Assignments
-              </Link>
-              <Link
-                href="/beta-notice"
-                className="text-sm px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-              >
-                Beta Notice
-              </Link>
-            </div>
-          </div>
+          {/* Beta Demo Flow */}
+          <Alert className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <AlertTitle className="text-lg font-semibold">
+              Beta Demo Flow
+            </AlertTitle>
+            <AlertDescription className="mt-3 space-y-3">
+              <ol className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <Badge variant="outline" className="mt-0.5">1</Badge>
+                  <span>Create or open a class</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Badge variant="outline" className="mt-0.5">2</Badge>
+                  <span>Bulk-create anonymized students</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Badge variant="outline" className="mt-0.5">3</Badge>
+                  <span>Create or auto-generate an assignment</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Badge variant="outline" className="mt-0.5">4</Badge>
+                  <span>Ask students to run public tests and submit final answers</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Badge variant="outline" className="mt-0.5">5</Badge>
+                  <span>Review analytics and export CSV</span>
+                </li>
+              </ol>
+              <div className="flex gap-3 flex-wrap pt-2">
+                <Button asChild>
+                  <Link href="/teacher/classes">Manage Classes</Link>
+                </Button>
+                <Button variant="secondary" asChild>
+                  <Link href="/teacher/assignments">Create Assignment</Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/teacher/questions">Question Bank</Link>
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <StatCard label="Classes" value={stats.class_count} href="/teacher/classes" />
-            <StatCard label="Questions" value={stats.question_count} href="/teacher/questions" />
-            <StatCard label="Assignments" value={stats.assignment_count} href="/teacher/assignments" />
+          {/* Summary Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StatCard
+              label="Classes"
+              value={stats.class_count}
+              description="Active teaching classes"
+              href="/teacher/classes"
+            />
+            <StatCard
+              label="Questions"
+              value={stats.question_count}
+              description="Questions in your bank"
+              href="/teacher/questions"
+            />
+            <StatCard
+              label="Assignments"
+              value={stats.assignment_count}
+              description="Published assignments"
+              href="/teacher/assignments"
+            />
           </div>
 
           {analytics && (
             <>
               {/* Assignment Completion */}
-              {analytics.assignment_stats.length > 0 && (
-                <section>
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-lg font-semibold">Assignment Completion Rates</h2>
-                    <a
-                      href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/analytics/export.csv`}
-                      download="analytics_export.csv"
-                      className="text-sm px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                      onClick={(e) => {
-                        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-                        if (token) {
-                          e.preventDefault();
-                          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/analytics/export.csv`, {
-                            headers: { Authorization: `Bearer ${token}` },
-                          })
-                            .then((res) => res.blob())
-                            .then((blob) => {
-                              const url = window.URL.createObjectURL(blob);
-                              const a = document.createElement('a');
-                              a.href = url;
-                              a.download = 'analytics_export.csv';
-                              a.click();
-                            });
-                        }
-                      }}
-                    >
-                      Export CSV
-                    </a>
-                  </div>
-                  <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b">
-                        <tr>
-                          <th className="text-left p-3 font-medium text-gray-700">Assignment</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Total</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Attempted</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Completed</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Attempt %</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Complete %</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Not Completed</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
+              {analytics.assignment_stats.length > 0 ? (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Assignment Completion Rates</CardTitle>
+                        <CardDescription>
+                          Track student progress across assignments
+                        </CardDescription>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const token =
+                            typeof window !== "undefined"
+                              ? localStorage.getItem("token")
+                              : null;
+                          if (token) {
+                            fetch(
+                              `${
+                                process.env.NEXT_PUBLIC_API_URL ||
+                                "http://localhost:8000"
+                              }/analytics/export.csv`,
+                              {
+                                headers: { Authorization: `Bearer ${token}` },
+                              }
+                            )
+                              .then((res) => res.blob())
+                              .then((blob) => {
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = "analytics_export.csv";
+                                a.click();
+                              });
+                          }
+                        }}
+                      >
+                        Export CSV
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Assignment</TableHead>
+                          <TableHead className="text-center">Total</TableHead>
+                          <TableHead className="text-center">Attempted</TableHead>
+                          <TableHead className="text-center">Completed</TableHead>
+                          <TableHead className="text-center">Attempt %</TableHead>
+                          <TableHead className="text-center">Complete %</TableHead>
+                          <TableHead className="text-center">Not Completed</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {analytics.assignment_stats.map((stat) => (
-                          <tr key={stat.assignment_id} className="hover:bg-gray-50">
-                            <td className="p-3">
-                              <Link href={`/teacher/assignments`} className="text-blue-600 hover:underline">
+                          <TableRow key={stat.assignment_id}>
+                            <TableCell className="font-medium">
+                              <Link
+                                href="/teacher/assignments"
+                                className="text-primary hover:underline"
+                              >
                                 {stat.title}
                               </Link>
-                            </td>
-                            <td className="text-center p-3">{stat.total_students}</td>
-                            <td className="text-center p-3">{stat.attempted_students}</td>
-                            <td className="text-center p-3">{stat.completed_students}</td>
-                            <td className="text-center p-3">
-                              <span className={`font-medium ${
-                                stat.attempt_rate >= 80 ? "text-green-600" :
-                                stat.attempt_rate >= 50 ? "text-yellow-600" :
-                                "text-red-600"
-                              }`}>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {stat.total_students}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {stat.attempted_students}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {stat.completed_students}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge
+                                variant={
+                                  stat.attempt_rate >= 80
+                                    ? "default"
+                                    : stat.attempt_rate >= 50
+                                    ? "outline"
+                                    : "destructive"
+                                }
+                              >
                                 {stat.attempt_rate}%
-                              </span>
-                            </td>
-                            <td className="text-center p-3">
-                              <span className={`font-medium ${
-                                stat.completion_rate >= 80 ? "text-green-600" :
-                                stat.completion_rate >= 50 ? "text-yellow-600" :
-                                "text-red-600"
-                              }`}>
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge
+                                variant={
+                                  stat.completion_rate >= 80
+                                    ? "default"
+                                    : stat.completion_rate >= 50
+                                    ? "outline"
+                                    : "destructive"
+                                }
+                              >
                                 {stat.completion_rate}%
-                              </span>
-                            </td>
-                            <td className="text-center p-3 text-sm text-gray-600">
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center text-sm">
                               {stat.not_completed_students.length === 0 ? (
-                                <span className="text-green-600 font-medium">All completed</span>
+                                <Badge variant="default">All completed</Badge>
                               ) : (
-                                <span title={stat.not_completed_students.map(s => s.display_name).join(', ')}>
-                                  {stat.not_completed_students.slice(0, 3).map(s => s.display_name).join(', ')}
-                                  {stat.not_completed_students.length > 3 && ` +${stat.not_completed_students.length - 3} more`}
+                                <span
+                                  className="text-muted-foreground"
+                                  title={stat.not_completed_students
+                                    .map((s) => s.display_name)
+                                    .join(", ")}
+                                >
+                                  {stat.not_completed_students
+                                    .slice(0, 3)
+                                    .map((s) => s.display_name)
+                                    .join(", ")}
+                                  {stat.not_completed_students.length > 3 &&
+                                    ` +${
+                                      stat.not_completed_students.length - 3
+                                    } more`}
                                 </span>
                               )}
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-              )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              ) : null}
 
               {/* Question Performance */}
-              {analytics.question_stats.length > 0 && (
-                <section>
-                  <h2 className="text-lg font-semibold mb-4">Question Performance</h2>
-                  <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b">
-                        <tr>
-                          <th className="text-left p-3 font-medium text-gray-700">Question</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Unit</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Skill</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Submissions</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Avg Score</th>
-                          <th className="text-center p-3 font-medium text-gray-700">Pass Rate</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
+              {analytics.question_stats.length > 0 &&
+              analytics.question_stats.some((q) => q.submission_count > 0) ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Question Performance</CardTitle>
+                    <CardDescription>
+                      Average scores and pass rates by question
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Question</TableHead>
+                          <TableHead className="text-center">Unit</TableHead>
+                          <TableHead className="text-center">Skill</TableHead>
+                          <TableHead className="text-center">Submissions</TableHead>
+                          <TableHead className="text-center">Avg Score</TableHead>
+                          <TableHead className="text-center">Pass Rate</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {analytics.question_stats
                           .filter((q) => q.submission_count > 0)
                           .map((stat) => (
-                            <tr key={stat.question_id} className="hover:bg-gray-50">
-                              <td className="p-3">
-                                <Link href={`/teacher/questions/${stat.question_id}`} className="text-blue-600 hover:underline">
-                                  {stat.title}
-                                </Link>
-                              </td>
-                              <td className="text-center p-3 text-gray-600">{stat.unit}</td>
-                              <td className="text-center p-3 text-gray-600">{stat.skill || "—"}</td>
-                              <td className="text-center p-3">{stat.submission_count}</td>
-                              <td className="text-center p-3">
-                                <span className={`font-medium ${
-                                  stat.avg_score >= 80 ? "text-green-600" :
-                                  stat.avg_score >= 60 ? "text-yellow-600" :
-                                  "text-red-600"
-                                }`}>
+                            <TableRow key={stat.question_id}>
+                              <TableCell className="font-medium">
+                                {stat.title}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="outline">{stat.unit}</Badge>
+                              </TableCell>
+                              <TableCell className="text-center text-muted-foreground">
+                                {stat.skill || "—"}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {stat.submission_count}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge
+                                  variant={
+                                    stat.avg_score >= 80
+                                      ? "default"
+                                      : stat.avg_score >= 60
+                                      ? "outline"
+                                      : "destructive"
+                                  }
+                                >
                                   {stat.avg_score}%
-                                </span>
-                              </td>
-                              <td className="text-center p-3">
-                                <span className={`font-medium ${
-                                  stat.pass_rate >= 80 ? "text-green-600" :
-                                  stat.pass_rate >= 50 ? "text-yellow-600" :
-                                  "text-red-600"
-                                }`}>
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge
+                                  variant={
+                                    stat.pass_rate >= 80
+                                      ? "default"
+                                      : stat.pass_rate >= 50
+                                      ? "outline"
+                                      : "destructive"
+                                  }
+                                >
                                   {stat.pass_rate}%
-                                </span>
-                              </td>
-                            </tr>
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
                           ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-              )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              ) : null}
 
               {/* Skill Aggregation */}
               {analytics.skill_stats.length > 0 && (
-                <section>
-                  <h2 className="text-lg font-semibold mb-4">Performance by Skill</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {analytics.skill_stats.map((stat) => (
-                      <div key={stat.skill} className="bg-white rounded-lg shadow p-4">
-                        <h3 className="font-medium text-gray-900 mb-2">{stat.skill}</h3>
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="text-2xl font-bold text-blue-600">{stat.avg_score}%</p>
-                            <p className="text-xs text-gray-500">Average Score</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-lg font-semibold text-gray-700">{stat.question_count}</p>
-                            <p className="text-xs text-gray-500">Questions</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Performance by Skill</CardTitle>
+                    <CardDescription>
+                      Average scores grouped by skill category
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {analytics.skill_stats.map((stat) => (
+                        <Card key={stat.skill} className="border-2">
+                          <CardContent className="pt-6">
+                            <div className="flex justify-between items-start mb-4">
+                              <h3 className="font-semibold text-lg">
+                                {stat.skill}
+                              </h3>
+                              <Badge variant="outline">
+                                {stat.question_count} Q
+                              </Badge>
+                            </div>
+                            <div className="text-3xl font-bold text-primary">
+                              {stat.avg_score}%
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Average Score
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </>
           )}
@@ -244,56 +395,79 @@ export default function DashboardPage() {
       )}
 
       {user.role === "student" && stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <StatCard label="Assignments" value={stats.assignment_count} href="/student/assignments" />
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-500">Average Score</p>
-            <p className="text-3xl font-bold text-blue-600">
-              {stats.average_score !== null ? `${stats.average_score}%` : "N/A"}
-            </p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <StatCard
+            label="Assignments"
+            value={stats.assignment_count}
+            description="Available practice assignments"
+            href="/student/assignments"
+          />
+          <StatCard
+            label="Average Score"
+            value={
+              stats.average_score !== null ? `${stats.average_score}%` : "N/A"
+            }
+            description="Across all submissions"
+          />
         </div>
       )}
 
-      <section>
-        <h2 className="text-lg font-semibold mb-4">Recent Submissions</h2>
-        {stats?.recent_submissions.length === 0 && (
-          <p className="text-gray-400">No submissions yet.</p>
-        )}
-        <div className="space-y-2">
-          {stats?.recent_submissions.map((sub) => (
-            <div key={sub.id} className="bg-white rounded-lg shadow p-4 flex justify-between items-center">
-              <div>
-                <p className="font-medium">{sub.question_title || `Question #${sub.question_id}`}</p>
-                <p className="text-sm text-gray-500">
-                  {sub.student_name && `${sub.student_name} · `}
-                  {new Date(sub.created_at).toLocaleString()}
-                  {sub.is_final ? " · Final" : " · Practice run"}
-                </p>
-              </div>
-              <div className="text-right">
-                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  sub.status === "passed" ? "bg-green-100 text-green-700" :
-                  sub.status === "failed_compile" ? "bg-red-100 text-red-700" :
-                  "bg-yellow-100 text-yellow-700"
-                }`}>
-                  {sub.status}
-                </span>
-                <p className="text-sm mt-1">{sub.score}/{sub.max_score} pts</p>
-              </div>
+      {/* Recent Submissions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Submissions</CardTitle>
+          <CardDescription>
+            Latest practice runs and final submissions
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!stats || stats.recent_submissions.length === 0 ? (
+            <EmptyState
+              title="No submissions yet"
+              description={
+                user.role === "teacher"
+                  ? "Student submissions will appear here once they start practicing"
+                  : "Your submissions will appear here after you start practicing"
+              }
+            />
+          ) : (
+            <div className="space-y-3">
+              {stats.recent_submissions.map((sub) => (
+                <div
+                  key={sub.id}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                >
+                  <div className="space-y-1">
+                    <p className="font-medium">
+                      {sub.question_title || `Question #${sub.question_id}`}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {sub.student_name && `${sub.student_name} · `}
+                      {new Date(sub.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-lg font-semibold">
+                        {sub.score}/{sub.max_score}
+                      </p>
+                      <p className="text-xs text-muted-foreground">points</p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <StatusBadge status={sub.status} />
+                      {sub.is_final ? (
+                        <Badge variant="default">Final</Badge>
+                      ) : (
+                        <Badge variant="outline">Practice</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          )}
+        </CardContent>
+      </Card>
     </div>
-  );
-}
-
-function StatCard({ label, value, href }: { label: string; value: number; href: string }) {
-  return (
-    <Link href={href} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-3xl font-bold text-blue-600">{value}</p>
-    </Link>
   );
 }

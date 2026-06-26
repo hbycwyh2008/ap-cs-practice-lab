@@ -955,6 +955,42 @@ Current scope: **AP_CSA** / **FRQ_CODE** / `public int solve(int[] nums)` only.
 - Single school deployment model
 - Hidden test details masked for students (pass/fail message only)
 
+## Milestone 3.9: High-Polish UI Redesign
+
+**Modern, demo-ready interface** with shadcn/ui + Tailwind CSS for beta trials and public showcases.
+
+### UI Infrastructure
+
+**shadcn/ui Integration:**
+- Modern component library with Tailwind CSS v3.4
+- CVA (class-variance-authority) for component variants
+- Radix UI primitives for accessibility
+- Tailwind CSS color system with CSS variables
+- Responsive design tokens and utilities
+
+**Installed shadcn/ui Components:**
+- Button, Card, Input, Textarea, Label, Badge, Alert, Table, Separator
+
+**Custom Reusable Components:**
+- `PageHeader`, `StatCard`, `EmptyState`, `StatusBadge`, `DemoAccountCard`, `BetaNoticeCard`
+
+### Redesigned Pages
+
+**1. Landing Page** - Hero, features, beta scope, workflows, privacy messaging  
+**2. Login Page** - Two-column layout with demo credentials  
+**3. Teacher Dashboard** - Beta demo flow, analytics tables, stat cards  
+**4. Student Coding Page** - Two-column problem/editor layout with test results
+
+### Visual Design
+
+- Clean, modern education SaaS aesthetic
+- Soft slate gradients and blue accents
+- Professional typography and spacing
+- Suitable for beta demos and screen recording
+- High contrast, clear hierarchy
+
+**No Breaking Changes:** All existing functionality preserved. Smoke test passes: ✅
+
 ## Implemented Features
 
 - [x] User roles (teacher / student) with JWT auth

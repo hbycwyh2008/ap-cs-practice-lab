@@ -2,8 +2,23 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { api, Question, Feedback } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { StatusBadge } from "@/components/status-badge";
 
 function QuestionSolver() {
   const { id } = useParams<{ id: string }>();
@@ -19,20 +34,28 @@ function QuestionSolver() {
   const [running, setRunning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [activeTab, setActiveTab] = useState<"problem" | "results">("problem");
 
   useEffect(() => {
     if (id && user) {
-      api.getQuestion(Number(id)).then((q) => {
-        setQuestion(q);
-        setCode(q.starter_code);
-      }).catch(console.error);
+      api
+        .getQuestion(Number(id))
+        .then((q) => {
+          setQuestion(q);
+          setCode(q.starter_code);
+        })
+        .catch(console.error);
     }
   }, [id, user]);
 
   const handleRun = async () => {
-    if (!assignmentId) { setMessage("Missing assignment ID"); return; }
+    if (!assignmentId) {
+      setMessage("Missing assignment ID");
+      return;
+    }
     setRunning(true);
     setMessage("");
+    setFeedback(null);
     try {
       const result = await api.runCode({
         question_id: Number(id),
@@ -42,7 +65,10 @@ function QuestionSolver() {
       setFeedback(result.feedback);
       setCompileOutput(result.compile_output || "");
       setRuntimeOutput(result.runtime_output || "");
-      setMessage(`Public tests: ${result.feedback.passed_tests}/${result.feedback.total_tests} passed (${result.score}/${result.max_score} pts)`);
+      setMessage(
+        `Public tests: ${result.feedback.passed_tests}/${result.feedback.total_tests} passed (${result.score}/${result.max_score} pts)`
+      );
+      setActiveTab("results");
     } catch (err: unknown) {
       setMessage(err instanceof Error ? err.message : "Run failed");
     } finally {
@@ -51,9 +77,13 @@ function QuestionSolver() {
   };
 
   const handleSubmit = async () => {
-    if (!assignmentId) { setMessage("Missing assignment ID"); return; }
+    if (!assignmentId) {
+      setMessage("Missing assignment ID");
+      return;
+    }
     setSubmitting(true);
     setMessage("");
+    setFeedback(null);
     try {
       const result = await api.submitCode({
         question_id: Number(id),
@@ -63,11 +93,18 @@ function QuestionSolver() {
       if (result.feedback) {
         setFeedback(result.feedback);
       } else {
-        try { setFeedback(JSON.parse(result.feedback_json)); } catch { /* ignore */ }
+        try {
+          setFeedback(JSON.parse(result.feedback_json));
+        } catch {
+          /* ignore */
+        }
       }
       setCompileOutput(result.compile_output || "");
       setRuntimeOutput(result.runtime_output || "");
-      setMessage(`Submitted! Score: ${result.score}/${result.max_score} (${result.status})`);
+      setMessage(
+        `Submitted! Final Score: ${result.score}/${result.max_score} (${result.status})`
+      );
+      setActiveTab("results");
     } catch (err: unknown) {
       setMessage(err instanceof Error ? err.message : "Submit failed");
     } finally {
@@ -75,90 +112,233 @@ function QuestionSolver() {
     }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (!user) return <div className="p-8">Please login</div>;
-  if (!question) return <div className="p-8">Loading question...</div>;
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  if (!user)
+    return (
+      <div className="container p-6">
+        <Alert>
+          <AlertDescription>Please login to continue</AlertDescription>
+        </Alert>
+      </div>
+    );
+  if (!question)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-muted-foreground">Loading question...</p>
+      </div>
+    );
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-2">{question.title}</h1>
-      <p className="text-gray-500 mb-4">{question.unit} · {question.topic} · {question.max_points} pts</p>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section className="bg-white rounded-lg shadow p-6">
-          <h2 className="font-semibold mb-3">Problem</h2>
-          <p className="text-sm whitespace-pre-wrap mb-4">{question.prompt}</p>
-          <h3 className="text-sm font-medium text-gray-500 mb-2">Method signature:</h3>
-          <pre className="bg-gray-50 p-2 rounded text-xs font-mono">public int solve(int[] nums)</pre>
-        </section>
-
-        <section className="bg-white rounded-lg shadow p-6">
-          <h2 className="font-semibold mb-3">Your Code</h2>
-          <textarea
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            rows={16}
-            className="w-full border rounded-md p-3 font-mono text-sm bg-gray-900 text-green-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            spellCheck={false}
-          />
-          <div className="flex gap-3 mt-4">
-            <button
-              onClick={handleRun}
-              disabled={running}
-              className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 disabled:opacity-50"
-            >
-              {running ? "Running..." : "Run Public Tests"}
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              {submitting ? "Submitting..." : "Submit Final Answer"}
-            </button>
+    <div className="container max-w-7xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/student/assignments/${assignmentId}`}>
+                ← Back
+              </Link>
+            </Button>
           </div>
-        </section>
+          <h1 className="text-3xl font-bold">{question.title}</h1>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Badge variant="outline">{question.unit}</Badge>
+            <span>·</span>
+            <span>{question.topic}</span>
+            <span>·</span>
+            <Badge>{question.max_points} points</Badge>
+          </div>
+        </div>
       </div>
 
+      {/* Test Policy Alert */}
+      <Alert className="bg-blue-50 border-blue-200">
+        <AlertDescription className="text-sm">
+          <strong>Test Policy:</strong> Public tests are visible during practice
+          runs. Hidden tests are used for final scoring only. Run public tests as
+          many times as needed before submitting.
+        </AlertDescription>
+      </Alert>
+
+      {/* Main Content - Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Problem Statement */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Problem Statement</CardTitle>
+              <CardDescription>Read the requirements carefully</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="prose prose-sm max-w-none">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                  {question.prompt}
+                </p>
+              </div>
+              <Separator />
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground mb-2 block">
+                  Method Signature:
+                </Label>
+                <pre className="bg-muted p-3 rounded-md text-xs font-mono">
+                  public int solve(int[] nums)
+                </pre>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right: Code Editor */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Solution</CardTitle>
+              <CardDescription>
+                Write your Java code below
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Textarea
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  rows={18}
+                  className="font-mono text-sm bg-slate-950 text-green-400 border-slate-700 focus-visible:ring-blue-500"
+                  spellCheck={false}
+                  placeholder="// Write your code here..."
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleRun}
+                  disabled={running || submitting}
+                  variant="secondary"
+                  className="flex-1"
+                >
+                  {running ? "Running..." : "Run Public Tests"}
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={submitting || running}
+                  className="flex-1"
+                >
+                  {submitting ? "Submitting..." : "Submit Final Answer"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Status Message */}
       {message && (
-        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">{message}</div>
+        <Alert className={feedback?.compiled === false ? "border-red-200 bg-red-50" : "border-blue-200 bg-blue-50"}>
+          <AlertDescription className="font-medium">{message}</AlertDescription>
+        </Alert>
       )}
 
+      {/* Compile/Runtime Output */}
       {compileOutput && (
-        <section className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
-          <h3 className="font-semibold text-sm text-red-700 mb-2">Compile Output</h3>
-          <pre className="text-xs font-mono whitespace-pre-wrap text-red-800">{compileOutput}</pre>
-        </section>
+        <Alert variant="destructive">
+          <AlertTitle>Compilation Error</AlertTitle>
+          <AlertDescription>
+            <pre className="text-xs font-mono whitespace-pre-wrap mt-2 p-3 bg-destructive/10 rounded">
+              {compileOutput}
+            </pre>
+          </AlertDescription>
+        </Alert>
       )}
 
       {runtimeOutput && !compileOutput && (
-        <section className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h3 className="font-semibold text-sm text-yellow-700 mb-2">Runtime Output</h3>
-          <pre className="text-xs font-mono whitespace-pre-wrap">{runtimeOutput}</pre>
-        </section>
+        <Alert className="border-yellow-200 bg-yellow-50">
+          <AlertTitle className="text-yellow-800">Runtime Output</AlertTitle>
+          <AlertDescription>
+            <pre className="text-xs font-mono whitespace-pre-wrap mt-2 p-3 bg-yellow-100/50 rounded text-yellow-900">
+              {runtimeOutput}
+            </pre>
+          </AlertDescription>
+        </Alert>
       )}
 
+      {/* Test Results */}
       {feedback && (
-        <section className="mt-6 bg-white rounded-lg shadow p-6">
-          <h2 className="font-semibold mb-3">
-            Test Results — {feedback.passed_tests}/{feedback.total_tests} passed
-            {!feedback.compiled && <span className="text-red-500 ml-2">(Compilation failed)</span>}
-          </h2>
-          <div className="space-y-2">
-            {feedback.tests.map((t, i) => (
-              <div key={i} className={`flex justify-between items-center p-3 rounded text-sm ${
-                t.passed ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"
-              }`}>
-                <div>
-                  <span className="font-medium">{t.name}</span>
-                  {t.hidden && <span className="ml-2 text-xs text-gray-400">(hidden)</span>}
-                  <p className="text-gray-600 mt-1">{t.message}</p>
-                </div>
-                <span className="font-medium">{t.passed ? `+${t.points}` : "0"} pts</span>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Test Results</CardTitle>
+                <CardDescription>
+                  {feedback.passed_tests}/{feedback.total_tests} tests passed
+                  {!feedback.compiled && (
+                    <span className="ml-2 text-destructive font-semibold">
+                      (Compilation failed)
+                    </span>
+                  )}
+                </CardDescription>
               </div>
-            ))}
-          </div>
-        </section>
+              <Badge
+                variant={
+                  feedback.passed_tests === feedback.total_tests
+                    ? "default"
+                    : "destructive"
+                }
+                className="text-base px-4 py-1"
+              >
+                {feedback.passed_tests === feedback.total_tests
+                  ? "All Passed"
+                  : `${feedback.passed_tests}/${feedback.total_tests}`}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {feedback.tests.map((t, i) => (
+                <div
+                  key={i}
+                  className={`flex items-start justify-between p-4 rounded-lg border-2 ${
+                    t.passed
+                      ? "bg-green-50 border-green-200"
+                      : "bg-red-50 border-red-200"
+                  }`}
+                >
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm">{t.name}</span>
+                      {t.hidden && (
+                        <Badge variant="outline" className="text-xs">
+                          Hidden
+                        </Badge>
+                      )}
+                    </div>
+                    <p
+                      className={`text-sm ${
+                        t.passed ? "text-green-700" : "text-red-700"
+                      }`}
+                    >
+                      {t.message}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold">
+                      {t.passed ? (
+                        <span className="text-green-600">+{t.points}</span>
+                      ) : (
+                        <span className="text-red-600">0</span>
+                      )}{" "}
+                      pts
+                    </span>
+                    <StatusBadge status={t.passed ? "passed" : "failed"} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
@@ -166,7 +346,13 @@ function QuestionSolver() {
 
 export default function StudentQuestionPage() {
   return (
-    <Suspense fallback={<div className="p-8">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      }
+    >
       <QuestionSolver />
     </Suspense>
   );
