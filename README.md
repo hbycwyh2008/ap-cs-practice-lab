@@ -278,7 +278,7 @@ python scripts/smoke_test.py
 ```
 
 `scripts/smoke_test.py` creates temporary orphan questions and auto-generated
-assignments during regression checks and deletes them before finishing.
+assignments during regression checks and archives temporary questions and deletes temporary auto-generated assignments before finishing.
 
 Current scope: **AP_CSA** / **FRQ_CODE** / `public int solve(int[] nums)` only.
 

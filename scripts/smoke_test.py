@@ -102,12 +102,12 @@ def login(creds):
     return token
 
 
-def _delete_question(teacher_token, question_id):
+def _archive_question(teacher_token, question_id):
     status, resp = _request("DELETE", f"/questions/{question_id}", token=teacher_token)
     assert status == 200, (
         f"DELETE /questions/{question_id} failed: {status} {resp}"
     )
-    print(f"  [ok] deleted orphan question id={question_id}")
+    print(f"  [ok] archived temporary question id={question_id}")
 
 
 def _delete_assignment(teacher_token, assignment_id):
@@ -192,7 +192,7 @@ def test_unassigned_question_forbidden(
     )
     print(f"  [ok] submit blocked for orphan question id={orphan_id}")
 
-    _delete_question(teacher_token, orphan_id)
+    _archive_question(teacher_token, orphan_id)
 
 
 def test_auto_generate(teacher_token, student_token):
