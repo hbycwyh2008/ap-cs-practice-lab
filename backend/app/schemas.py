@@ -302,3 +302,35 @@ class DashboardStats(BaseModel):
     recent_submissions: list[SubmissionDetail] = []
     my_assignments: list[AssignmentRead] = []
     average_score: Optional[float] = None
+
+
+# Analytics
+class AssignmentCompletionStats(BaseModel):
+    assignment_id: int
+    title: str
+    total_students: int
+    submitted_students: int
+    completion_rate: float
+
+
+class QuestionStats(BaseModel):
+    question_id: int
+    title: str
+    unit: str
+    skill: Optional[str]
+    submission_count: int
+    avg_score: float
+    pass_rate: float
+
+
+class SkillStats(BaseModel):
+    skill: str
+    avg_score: float
+    question_count: int
+
+
+class TeacherAnalytics(BaseModel):
+    assignment_stats: list[AssignmentCompletionStats] = []
+    question_stats: list[QuestionStats] = []
+    skill_stats: list[SkillStats] = []
+

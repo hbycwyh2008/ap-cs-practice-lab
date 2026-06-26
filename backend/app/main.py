@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, classes, questions, test_cases, assignments, submissions, dashboard
+from app.api import auth, classes, questions, test_cases, assignments, submissions, dashboard, analytics
 from app.database import create_db_and_tables
 
 
@@ -35,6 +35,7 @@ app.include_router(test_cases.router)
 app.include_router(assignments.router)
 app.include_router(submissions.router)
 app.include_router(dashboard.router)
+app.include_router(analytics.router)
 
 
 @app.get("/health")

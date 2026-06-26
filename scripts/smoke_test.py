@@ -339,6 +339,46 @@ def test_question_archive_restore(teacher_token, class_id):
     print(f"  [ok] question id={qid} archived (cleanup)")
 
 
+def test_teacher_analytics(teacher_token):
+    print("12. Regression: teacher analytics endpoint")
+    
+    status, analytics = _request("GET", "/analytics", token=teacher_token)
+    assert status == 200, f"GET /analytics failed: {status} {analytics}"
+    
+    assert "assignment_stats" in analytics, "Missing assignment_stats"
+    assert "question_stats" in analytics, "Missing question_stats"
+    assert "skill_stats" in analytics, "Missing skill_stats"
+    print("  [ok] analytics structure valid")
+    
+    # Validate assignment stats structure
+    if analytics["assignment_stats"]:
+        a_stat = analytics["assignment_stats"][0]
+        assert "assignment_id" in a_stat
+        assert "title" in a_stat
+        assert "total_students" in a_stat
+        assert "submitted_students" in a_stat
+        assert "completion_rate" in a_stat
+        print(f"  [ok] assignment stats: {len(analytics['assignment_stats'])} entries")
+    
+    # Validate question stats structure
+    if analytics["question_stats"]:
+        q_stat = analytics["question_stats"][0]
+        assert "question_id" in q_stat
+        assert "title" in q_stat
+        assert "submission_count" in q_stat
+        assert "avg_score" in q_stat
+        assert "pass_rate" in q_stat
+        print(f"  [ok] question stats: {len(analytics['question_stats'])} entries")
+    
+    # Validate skill stats structure
+    if analytics["skill_stats"]:
+        s_stat = analytics["skill_stats"][0]
+        assert "skill" in s_stat
+        assert "avg_score" in s_stat
+        assert "question_count" in s_stat
+        print(f"  [ok] skill stats: {len(analytics['skill_stats'])} entries")
+
+
 def _find_seed_assignment(assignments):
     for a in assignments:
         if a.get("title") == "Array Traversal Practice":
@@ -413,6 +453,8 @@ def main():
     status, classes = _request("GET", "/classes", token=teacher_token)
     assert status == 200 and classes, f"GET /classes failed: {status} {classes}"
     test_question_archive_restore(teacher_token, classes[0]["id"])
+
+    test_teacher_analytics(teacher_token)
 
     print("\nSMOKE TEST PASSED")
 

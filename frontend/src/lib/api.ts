@@ -125,6 +125,36 @@ export interface DashboardStats {
   average_score: number | null;
 }
 
+export interface AssignmentCompletionStats {
+  assignment_id: number;
+  title: string;
+  total_students: number;
+  submitted_students: number;
+  completion_rate: number;
+}
+
+export interface QuestionStats {
+  question_id: number;
+  title: string;
+  unit: string;
+  skill: string | null;
+  submission_count: number;
+  avg_score: number;
+  pass_rate: number;
+}
+
+export interface SkillStats {
+  skill: string;
+  avg_score: number;
+  question_count: number;
+}
+
+export interface TeacherAnalytics {
+  assignment_stats: AssignmentCompletionStats[];
+  question_stats: QuestionStats[];
+  skill_stats: SkillStats[];
+}
+
 class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -170,6 +200,8 @@ export const api = {
   me: () => request<User>("/auth/me"),
 
   getDashboard: () => request<DashboardStats>("/dashboard"),
+
+  getAnalytics: () => request<TeacherAnalytics>("/analytics"),
 
   getClasses: () => request<SchoolClass[]>("/classes"),
   createClass: (data: { name: string; school_year: string }) =>
