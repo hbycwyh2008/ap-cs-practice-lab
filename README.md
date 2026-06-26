@@ -753,6 +753,142 @@ Comprehensive deployment evaluation and planning:
 - ✅ Monitoring and alerting in place
 - ✅ Beta feedback collected and prioritized
 
+## Milestone 3.8: VPS Production Config Template
+
+**Production configuration templates** for Single VPS + Docker Compose deployment.
+
+### Production Files
+
+**Ready-to-use production configuration templates:**
+
+- **`docker-compose.prod.yml`** - Production Docker Compose configuration
+  - Production service orchestration
+  - Environment variable placeholders
+  - Security-focused port bindings
+  - Docker socket access with security warnings
+  - Restart policies for reliability
+  - Production command (no --reload)
+
+- **`.env.production.example`** - Production environment variable template
+  - All required variables documented
+  - Security-critical settings highlighted
+  - Placeholder values for secrets
+  - Configuration checklist
+  - Deployment command examples
+
+### Production Configuration Guide
+
+**Comprehensive production setup documentation:**
+
+- **[VPS Production Config](docs/VPS_PRODUCTION_CONFIG.md)** - Complete production configuration guide
+  - Why VPS deployment for this MVP
+  - Required files checklist
+  - Environment variable explanations (all 13 variables)
+  - Startup commands with docker-compose.prod.yml
+  - Verification checklist (health, login, Java tests, analytics)
+  - Security reminders and Java runner risk assessment
+  - Troubleshooting common production issues
+  - Monitoring and maintenance tasks
+  - Beta trial scale limits (3-5 teachers max)
+
+- **[Backup and Restore](docs/BACKUP_AND_RESTORE.md)** - PostgreSQL backup procedures
+  - Why backups are critical for beta
+  - Backup commands (full, compressed, table-specific)
+  - Restore commands (full, clean, from compressed)
+  - Backup frequency recommendations (daily during beta)
+  - Manual backup best practices
+  - Backup storage and security (encryption, offsite)
+  - Automation with cron (daily backup script)
+  - Disaster recovery scenarios
+  - Privacy considerations for beta data
+
+- **[Reverse Proxy Notes](docs/REVERSE_PROXY_NOTES.md)** - HTTPS setup with Caddy or Nginx
+  - Why use a reverse proxy (HTTPS, domain mapping, security)
+  - Caddy configuration (recommended - automatic HTTPS)
+  - Nginx configuration (with Certbot for Let's Encrypt)
+  - DNS configuration requirements
+  - Port configuration with/without reverse proxy
+  - Troubleshooting (certificates, CORS, 502 errors)
+  - Security best practices (rate limiting, headers)
+  - Monitoring and logs
+
+### Key Production Requirements
+
+**Security-Critical Settings:**
+
+```bash
+# MUST be changed in production
+APP_ENV=production
+ENABLE_PUBLIC_REGISTER=false
+SECRET_KEY=generate-with-openssl-rand-hex-32
+
+# MUST use HTTPS in beta
+CORS_ORIGINS=https://your-frontend-domain.com
+NEXT_PUBLIC_API_URL=https://your-backend-domain.com
+```
+
+**Java Runner Security:**
+
+⚠️ **Docker socket access required** (`/var/run/docker.sock`)
+
+- Acceptable for small beta (3-5 trusted teachers)
+- Risk documented in `docker-compose.prod.yml` comments
+- Containers are isolated with CPU/memory/timeout limits
+- Consider remote runner service for scaling beyond beta
+
+### Production Deployment Workflow
+
+**Quick reference:**
+
+```bash
+# 1. Prepare environment
+cp .env.production.example .env.production
+nano .env.production  # Update SECRET_KEY, passwords, domains
+
+# 2. Start production services
+docker compose -f docker-compose.prod.yml --env-file .env.production up --build -d
+
+# 3. Initialize database
+docker compose -f docker-compose.prod.yml --env-file .env.production exec backend python seed.py
+
+# 4. Verify deployment
+curl http://localhost:8000/health  # {"status":"ok"}
+
+# 5. Set up HTTPS (see REVERSE_PROXY_NOTES.md)
+# 6. Configure backups (see BACKUP_AND_RESTORE.md)
+```
+
+### Production Checklist
+
+**Before beta launch:**
+
+- [ ] `.env.production` created with real values (NOT committed to git)
+- [ ] `SECRET_KEY` changed from default (generate with `openssl rand -hex 32`)
+- [ ] `POSTGRES_PASSWORD` set to strong password
+- [ ] `APP_ENV=production`
+- [ ] `ENABLE_PUBLIC_REGISTER=false`
+- [ ] HTTPS configured with Caddy or Nginx
+- [ ] `CORS_ORIGINS` updated to actual frontend domain
+- [ ] `NEXT_PUBLIC_API_URL` updated to actual backend domain
+- [ ] Firewall configured (only ports 22, 80, 443)
+- [ ] PostgreSQL port 5432 NOT exposed to public
+- [ ] Backup strategy planned (daily backups during beta)
+- [ ] Smoke test passed on production environment
+
+### Beta Trial Scale Reminder
+
+**Do not exceed:**
+- 5 teachers maximum
+- 20 students per teacher
+- 2-4 weeks duration
+- AP CSA array FRQ only
+
+**Validate before scaling:**
+- Runner security in production
+- Backup/restore procedures
+- Monitoring and alerting
+- Beta feedback analysis
+
 ### Question tags
 
 Each question now includes:

@@ -1,0 +1,162 @@
+# Production Docker Compose Configuration
+# For Single VPS + Docker Compose beta deployment
+#
+# IMPORTANT: Copy .env.production.example to .env.production and configure
+# all required environment variables before starting.
+#
+# Startup command:
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up --build -d
+#
+# WARNING: This configuration requires Docker socket access for the Java runner.
+# Review security implications carefully before public beta deployment.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # SECURITY: Do NOT expose 5432 to public internet.
+      # Only expose internally or via localhost for maintenance.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-apcs} -d ${POSTGRES_DB:-ap_cs_practice}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  java-runner:
+    build: ./runner
+    image: ${JAVA_RUNNER_IMAGE:-ap-cs-java-runner}
+    command: ["echo", "Java runner image ready"]
+
+  backend:
+    build: ./backend
+    ports:
+      # Backend should typically be behind a reverse proxy in production.
+      # If using a reverse proxy (Caddy/Nginx), bind to localhost only:
+      # - "127.0.0.1:8000:8000"
+      # If direct public access (not recommended), use:
+      - "8000:8000"
+    environment:
+      # Application Settings
+      APP_ENV: ${APP_ENV:-production}
+      
+      # SECURITY CRITICAL: Public registration MUST be disabled in production
+      ENABLE_PUBLIC_REGISTER: ${ENABLE_PUBLIC_REGISTER:-false}
+      
+      # SECURITY CRITICAL: SECRET_KEY must be a long random string
+      # Never use the default dev key in production
+      SECRET_KEY: ${SECRET_KEY}
+      
+      # Database Connection
+      DATABASE_URL: ${DATABASE_URL}
+      
+      # CORS Configuration
+      # Set to your frontend domain(s), comma-separated
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      
+      # Java Runner Configuration
+      JAVA_RUNNER_IMAGE: ${JAVA_RUNNER_IMAGE:-ap-cs-java-runner}
+      JAVA_RUNNER_MEMORY: ${JAVA_RUNNER_MEMORY:-256m}
+      JAVA_RUNNER_CPUS: ${JAVA_RUNNER_CPUS:-0.5}
+      JAVA_RUNNER_PIDS_LIMIT: ${JAVA_RUNNER_PIDS_LIMIT:-64}
+      JAVA_RUNNER_TIMEOUT: ${JAVA_RUNNER_TIMEOUT:-5}
+      JAVA_RUNNER_TMP_DIR: ${JAVA_RUNNER_TMP_DIR:-/tmp/ap-cs-practice-lab-java-runs}
+    
+    volumes:
+      # SECURITY WARNING: Docker socket access required for Java runner.
+      # This is required by the current Docker-based Java runner. Review carefully before public beta.
+      # Grants backend container permission to spawn isolated Java execution containers.
+      # Risk: Container escape could compromise host. Acceptable for small beta with trusted teachers.
+      # TODO: Consider remote runner service for production scaling.
+      - /var/run/docker.sock:/var/run/docker.sock
+      
+      # Shared temp directory for Java code execution
+      # This is required by the current Docker-based Java runner. Review carefully before public beta.
+      - ${JAVA_RUNNER_TMP_DIR:-/tmp/ap-cs-practice-lab-java-runs}:${JAVA_RUNNER_TMP_DIR:-/tmp/ap-cs-practice-lab-java-runs}
+    
+    depends_on:
+      postgres:
+        condition: service_healthy
+      java-runner:
+        condition: service_completed_successfully
+    
+    # Production command: No --reload flag
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      # Frontend should typically be behind a reverse proxy in production.
+      # If using a reverse proxy (Caddy/Nginx), bind to localhost only:
+      # - "127.0.0.1:3000:3000"
+      # If direct public access (not recommended), use:
+      - "3000:3000"
+    environment:
+      # Frontend API URL - set to your backend domain
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    
+    depends_on:
+      - backend
+    
+    restart: unless-stopped
+
+volumes:
+  postgres_data_prod:
+    driver: local
+
+# PRODUCTION DEPLOYMENT NOTES:
+#
+# 1. BEFORE STARTING:
+#    - Copy .env.production.example to .env.production
+#    - Update ALL placeholders (SECRET_KEY, passwords, domains)
+#    - Review security checklist in docs/VPS_PRODUCTION_CONFIG.md
+#
+# 2. STARTUP:
+#    docker compose -f docker-compose.prod.yml --env-file .env.production up --build -d
+#
+# 3. VERIFY:
+#    - Backend health: curl http://localhost:8000/health
+#    - Frontend access: curl http://localhost:3000
+#    - Teacher login works
+#    - Java runner executes code successfully
+#
+# 4. REVERSE PROXY (RECOMMENDED):
+#    - Use Caddy or Nginx for HTTPS termination
+#    - See docs/REVERSE_PROXY_NOTES.md for examples
+#    - Update CORS_ORIGINS to match frontend domain
+#    - Update NEXT_PUBLIC_API_URL to match backend domain
+#
+# 5. BACKUPS:
+#    - PostgreSQL: docker compose -f docker-compose.prod.yml exec postgres pg_dump
+#    - See docs/BACKUP_AND_RESTORE.md for detailed commands
+#
+# 6. MONITORING:
+#    - Watch container logs: docker compose -f docker-compose.prod.yml logs -f
+#    - Monitor CPU/memory: docker stats
+#    - Check disk usage: df -h
+#
+# 7. BETA TRIAL SCALE:
+#    - Recommended: 3-5 teachers, 5-20 students per teacher
+#    - Do not scale beyond this without validation
+#
+# 8. SECURITY REMINDERS:
+#    - Never commit .env.production with real credentials
+#    - Never use dev SECRET_KEY in production
+#    - Keep ENABLE_PUBLIC_REGISTER=false
+#    - Only open required ports (80, 443, 22)
+#    - Use anonymized student accounts during beta
+#
+# For complete deployment guide, see:
+# - docs/VPS_BETA_DEPLOYMENT_PLAN.md
+# - docs/VPS_PRODUCTION_CONFIG.md
+# - docs/DEPLOYMENT_CHECKLIST.md
