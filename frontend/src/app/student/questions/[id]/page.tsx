@@ -19,6 +19,12 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge } from "@/components/status-badge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 function QuestionSolver() {
   const { id } = useParams<{ id: string }>();
@@ -34,7 +40,7 @@ function QuestionSolver() {
   const [running, setRunning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
-  const [activeTab, setActiveTab] = useState<"problem" | "results">("problem");
+  const [activeTab, setActiveTab] = useState<string>("problem");
 
   useEffect(() => {
     if (id && user) {
@@ -71,6 +77,7 @@ function QuestionSolver() {
       setActiveTab("results");
     } catch (err: unknown) {
       setMessage(err instanceof Error ? err.message : "Run failed");
+      setActiveTab("results");
     } finally {
       setRunning(false);
     }
@@ -107,6 +114,7 @@ function QuestionSolver() {
       setActiveTab("results");
     } catch (err: unknown) {
       setMessage(err instanceof Error ? err.message : "Submit failed");
+      setActiveTab("results");
     } finally {
       setSubmitting(false);
     }
@@ -167,40 +175,183 @@ function QuestionSolver() {
 
       {/* Main Content - Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Problem Statement */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Problem Statement</CardTitle>
-              <CardDescription>Read the requirements carefully</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="prose prose-sm max-w-none">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                  {question.prompt}
-                </p>
-              </div>
-              <Separator />
-              <div>
-                <Label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Method Signature:
-                </Label>
-                <pre className="bg-muted p-3 rounded-md text-xs font-mono">
-                  public int solve(int[] nums)
-                </pre>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Left: Problem and Results Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full">
+            <TabsTrigger value="problem" className="flex-1">
+              Problem
+            </TabsTrigger>
+            <TabsTrigger value="results" className="flex-1">
+              Results
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="problem" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Problem Statement</CardTitle>
+                <CardDescription>
+                  Read the requirements carefully
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="prose prose-sm max-w-none">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {question.prompt}
+                  </p>
+                </div>
+                <Separator />
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground mb-2 block">
+                    Method Signature:
+                  </Label>
+                  <pre className="bg-muted p-3 rounded-md text-xs font-mono">
+                    public int solve(int[] nums)
+                  </pre>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="results" className="space-y-4">
+            {/* Status Message */}
+            {message && (
+              <Alert
+                className={
+                  feedback?.compiled === false
+                    ? "border-red-200 bg-red-50"
+                    : "border-blue-200 bg-blue-50"
+                }
+              >
+                <AlertDescription className="font-medium">
+                  {message}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Compile/Runtime Output */}
+            {compileOutput && (
+              <Alert variant="destructive">
+                <AlertTitle>Compilation Error</AlertTitle>
+                <AlertDescription>
+                  <pre className="text-xs font-mono whitespace-pre-wrap mt-2 p-3 bg-destructive/10 rounded">
+                    {compileOutput}
+                  </pre>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {runtimeOutput && !compileOutput && (
+              <Alert className="border-yellow-200 bg-yellow-50">
+                <AlertTitle className="text-yellow-800">
+                  Runtime Output
+                </AlertTitle>
+                <AlertDescription>
+                  <pre className="text-xs font-mono whitespace-pre-wrap mt-2 p-3 bg-yellow-100/50 rounded text-yellow-900">
+                    {runtimeOutput}
+                  </pre>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Test Results */}
+            {feedback ? (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Test Results</CardTitle>
+                      <CardDescription>
+                        {feedback.passed_tests}/{feedback.total_tests} tests
+                        passed
+                        {!feedback.compiled && (
+                          <span className="ml-2 text-destructive font-semibold">
+                            (Compilation failed)
+                          </span>
+                        )}
+                      </CardDescription>
+                    </div>
+                    <Badge
+                      variant={
+                        feedback.passed_tests === feedback.total_tests
+                          ? "default"
+                          : "destructive"
+                      }
+                      className="text-base px-4 py-1"
+                    >
+                      {feedback.passed_tests === feedback.total_tests
+                        ? "All Passed"
+                        : `${feedback.passed_tests}/${feedback.total_tests}`}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {feedback.tests.map((t, i) => (
+                      <div
+                        key={i}
+                        className={`flex items-start justify-between p-4 rounded-lg border-2 ${
+                          t.passed
+                            ? "bg-green-50 border-green-200"
+                            : "bg-red-50 border-red-200"
+                        }`}
+                      >
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">
+                              {t.name}
+                            </span>
+                            {t.hidden && (
+                              <Badge variant="outline" className="text-xs">
+                                Hidden
+                              </Badge>
+                            )}
+                          </div>
+                          <p
+                            className={`text-sm ${
+                              t.passed ? "text-green-700" : "text-red-700"
+                            }`}
+                          >
+                            {t.message}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg font-bold">
+                            {t.passed ? (
+                              <span className="text-green-600">
+                                +{t.points}
+                              </span>
+                            ) : (
+                              <span className="text-red-600">0</span>
+                            )}{" "}
+                            pts
+                          </span>
+                          <StatusBadge status={t.passed ? "passed" : "failed"} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-dashed">
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <p>No test results yet</p>
+                  <p className="text-sm mt-2">
+                    Run public tests or submit your solution to see results
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
 
         {/* Right: Code Editor */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Your Solution</CardTitle>
-              <CardDescription>
-                Write your Java code below
-              </CardDescription>
+              <CardDescription>Write your Java code below</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -234,112 +385,6 @@ function QuestionSolver() {
           </Card>
         </div>
       </div>
-
-      {/* Status Message */}
-      {message && (
-        <Alert className={feedback?.compiled === false ? "border-red-200 bg-red-50" : "border-blue-200 bg-blue-50"}>
-          <AlertDescription className="font-medium">{message}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Compile/Runtime Output */}
-      {compileOutput && (
-        <Alert variant="destructive">
-          <AlertTitle>Compilation Error</AlertTitle>
-          <AlertDescription>
-            <pre className="text-xs font-mono whitespace-pre-wrap mt-2 p-3 bg-destructive/10 rounded">
-              {compileOutput}
-            </pre>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {runtimeOutput && !compileOutput && (
-        <Alert className="border-yellow-200 bg-yellow-50">
-          <AlertTitle className="text-yellow-800">Runtime Output</AlertTitle>
-          <AlertDescription>
-            <pre className="text-xs font-mono whitespace-pre-wrap mt-2 p-3 bg-yellow-100/50 rounded text-yellow-900">
-              {runtimeOutput}
-            </pre>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Test Results */}
-      {feedback && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Test Results</CardTitle>
-                <CardDescription>
-                  {feedback.passed_tests}/{feedback.total_tests} tests passed
-                  {!feedback.compiled && (
-                    <span className="ml-2 text-destructive font-semibold">
-                      (Compilation failed)
-                    </span>
-                  )}
-                </CardDescription>
-              </div>
-              <Badge
-                variant={
-                  feedback.passed_tests === feedback.total_tests
-                    ? "default"
-                    : "destructive"
-                }
-                className="text-base px-4 py-1"
-              >
-                {feedback.passed_tests === feedback.total_tests
-                  ? "All Passed"
-                  : `${feedback.passed_tests}/${feedback.total_tests}`}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {feedback.tests.map((t, i) => (
-                <div
-                  key={i}
-                  className={`flex items-start justify-between p-4 rounded-lg border-2 ${
-                    t.passed
-                      ? "bg-green-50 border-green-200"
-                      : "bg-red-50 border-red-200"
-                  }`}
-                >
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm">{t.name}</span>
-                      {t.hidden && (
-                        <Badge variant="outline" className="text-xs">
-                          Hidden
-                        </Badge>
-                      )}
-                    </div>
-                    <p
-                      className={`text-sm ${
-                        t.passed ? "text-green-700" : "text-red-700"
-                      }`}
-                    >
-                      {t.message}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold">
-                      {t.passed ? (
-                        <span className="text-green-600">+{t.points}</span>
-                      ) : (
-                        <span className="text-red-600">0</span>
-                      )}{" "}
-                      pts
-                    </span>
-                    <StatusBadge status={t.passed ? "passed" : "failed"} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

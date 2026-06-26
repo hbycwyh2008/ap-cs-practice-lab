@@ -969,7 +969,7 @@ Current scope: **AP_CSA** / **FRQ_CODE** / `public int solve(int[] nums)` only.
 - Responsive design tokens and utilities
 
 **Installed shadcn/ui Components:**
-- Button, Card, Input, Textarea, Label, Badge, Alert, Table, Separator
+- Button, Card, Input, Textarea, Label, Badge, Alert, Table, Separator, Tabs
 
 **Custom Reusable Components:**
 - `PageHeader`, `StatCard`, `EmptyState`, `StatusBadge`, `DemoAccountCard`, `BetaNoticeCard`
@@ -979,7 +979,7 @@ Current scope: **AP_CSA** / **FRQ_CODE** / `public int solve(int[] nums)` only.
 **1. Landing Page** - Hero, features, beta scope, workflows, privacy messaging  
 **2. Login Page** - Two-column layout with demo credentials  
 **3. Teacher Dashboard** - Beta demo flow, analytics tables, stat cards  
-**4. Student Coding Page** - Two-column problem/editor layout with test results
+**4. Student Coding Page** - Tabbed interface (Problem/Results) with two-column editor layout
 
 ### Visual Design
 
