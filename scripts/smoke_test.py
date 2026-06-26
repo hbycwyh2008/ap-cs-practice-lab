@@ -505,6 +505,25 @@ def test_bulk_create_students(teacher_token, student_token):
     assert account1["email"] in csv_resp, "CSV missing created student"
     assert "temporary_password" not in csv_resp, "CSV should not contain passwords"
     print("  [ok] student CSV export valid")
+    
+    # Validate student_count in GET /classes
+    status, classes = _request("GET", "/classes", token=teacher_token)
+    assert status == 200, f"GET /classes failed: {status} {classes}"
+    assert isinstance(classes, list), f"Expected list, got {type(classes)}"
+    
+    # Find the beta class we created
+    beta_class = None
+    for cls in classes:
+        if cls.get("name") == "Smoke Test Beta Class":
+            beta_class = cls
+            break
+    
+    assert beta_class is not None, "Could not find Smoke Test Beta Class in GET /classes"
+    assert "student_count" in beta_class, "student_count field missing in class response"
+    assert beta_class["student_count"] >= 2, (
+        f"Expected student_count >= 2, got {beta_class['student_count']}"
+    )
+    print(f"  [ok] GET /classes shows student_count={beta_class['student_count']}")
 
 
 def _find_seed_assignment(assignments):

@@ -310,6 +310,12 @@ Response:
 
 Downloads student roster as CSV (excludes passwords).
 
+### Student Count Display
+
+- Teacher class list displays `student_count` so teachers can verify anonymized accounts were created successfully
+- `student_count` only counts users with `role = STUDENT`
+- Updates automatically after bulk-create
+
 ### Beta Trial Recommendations
 
 ✅ **Do:**

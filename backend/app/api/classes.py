@@ -20,7 +20,7 @@ from app.schemas import (
 router = APIRouter(prefix="/classes", tags=["classes"])
 
 
-@router.get("", response_model=list[ClassRead])
+@router.get("", response_model=list[ClassDetail])
 def list_classes(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
@@ -32,7 +32,33 @@ def list_classes(
             stmt = select(SchoolClass).where(SchoolClass.id == current_user.class_id)
         else:
             return []
-    return session.exec(stmt).all()
+    
+    classes = session.exec(stmt).all()
+    
+    # Add student_count for each class
+    result = []
+    for school_class in classes:
+        student_count = session.exec(
+            select(func.count())
+            .select_from(User)
+            .where(
+                User.class_id == school_class.id,
+                User.role == UserRole.STUDENT,
+            )
+        ).one()
+        
+        result.append(
+            ClassDetail(
+                id=school_class.id,
+                name=school_class.name,
+                school_year=school_class.school_year,
+                teacher_id=school_class.teacher_id,
+                created_at=school_class.created_at,
+                student_count=student_count,
+            )
+        )
+    
+    return result
 
 
 @router.post("", response_model=ClassRead)
@@ -68,7 +94,12 @@ def get_class(
         raise HTTPException(status_code=403, detail="Access denied")
 
     student_count = session.exec(
-        select(func.count()).select_from(User).where(User.class_id == class_id)
+        select(func.count())
+        .select_from(User)
+        .where(
+            User.class_id == class_id,
+            User.role == UserRole.STUDENT,
+        )
     ).one()
 
     return ClassDetail(

@@ -53,7 +53,7 @@ export interface SchoolClass {
   school_year: string;
   teacher_id: number;
   created_at: string;
-  student_count?: number;
+  student_count: number;
 }
 
 export interface StudentAccountInfo {
