@@ -28,6 +28,9 @@ services:
     environment:
       DATABASE_URL: postgresql://apcs:apcs_secret@postgres:5432/ap_cs_practice
       SECRET_KEY: dev-secret-key-change-in-production
+      APP_ENV: development
+      ENABLE_PUBLIC_REGISTER: "true"
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
       JAVA_RUNNER_IMAGE: ap-cs-java-runner
       JAVA_RUNNER_MEMORY: 256m
       JAVA_RUNNER_CPUS: "0.5"

@@ -335,6 +335,70 @@ Downloads student roster as CSV (excludes passwords).
 - Teachers verified manually before account creation
 - Students created only by their class teacher
 
+## Milestone 3.3: Beta Launch Safety
+
+**Production-Ready Configuration** for small-scale beta deployment.
+
+### Security Configuration
+
+**Required Environment Variables for Production:**
+
+```bash
+# CRITICAL: Change these in production
+SECRET_KEY=your-secure-random-key-here
+APP_ENV=production
+
+# Public Registration
+ENABLE_PUBLIC_REGISTER=false
+
+# CORS Origins (your deployed frontend URL)
+CORS_ORIGINS=https://your-frontend-domain.com
+
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/dbname
+```
+
+### Configuration Rules
+
+**Public Registration:**
+- **Development**: Can enable with `ENABLE_PUBLIC_REGISTER=true` for testing
+- **Beta/Production**: **MUST** be disabled (`ENABLE_PUBLIC_REGISTER=false`)
+- Teachers should be created manually or via admin/seed process
+- Students should be created through anonymized bulk-create by their teacher
+
+**Secret Key:**
+- Development default: `dev-secret-key-change-in-production`
+- Production: **MUST** be changed to a secure random key
+- Application will **refuse to start** if `APP_ENV=production` and secret key is still the default
+
+**CORS Origins:**
+- Development default: `http://localhost:3000,http://127.0.0.1:3000`
+- Production: Set to your deployed frontend URL(s), comma-separated
+- Example: `CORS_ORIGINS=https://app.example.com,https://www.example.com`
+
+### Security Checklist
+
+Before beta launch:
+- ✅ Set `SECRET_KEY` to a secure random value
+- ✅ Set `APP_ENV=production`
+- ✅ Set `ENABLE_PUBLIC_REGISTER=false`
+- ✅ Set `CORS_ORIGINS` to your frontend domain
+- ✅ Do not expose demo credentials in public screenshots
+- ✅ Do not collect or expose real student data
+
+### Local Development
+
+For local development and testing, use the provided defaults in `docker-compose.yml`:
+
+```yaml
+environment:
+  APP_ENV: development
+  ENABLE_PUBLIC_REGISTER: "true"
+  CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+```
+
+See `.env.example` for all configuration options.
+
 ### Question tags
 
 Each question now includes:

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth, classes, questions, test_cases, assignments, submissions, dashboard, analytics
+from app.config import settings
 from app.database import create_db_and_tables
 
 
@@ -20,9 +21,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Parse CORS origins from comma-separated string
+cors_origins = [
+    origin.strip()
+    for origin in settings.cors_origins.split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -7,6 +7,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
 
+    app_env: str = "development"
+    enable_public_register: bool = False
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+
     java_runner_image: str = "ap-cs-java-runner"
     java_runner_memory: str = "256m"
     java_runner_cpus: str = "0.5"
@@ -19,3 +23,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Production safety check
+if settings.app_env == "production" and settings.secret_key == "dev-secret-key-change-in-production":
+    raise ValueError("SECRET_KEY must be changed in production")

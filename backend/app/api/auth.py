@@ -9,6 +9,7 @@ from app.auth import (
     get_password_hash,
     get_user_by_email,
 )
+from app.config import settings
 from app.database import get_session
 from app.models import User
 from app.schemas import Token, UserLogin, UserRead, UserRegister
@@ -18,6 +19,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=UserRead)
 def register(data: UserRegister, session: Session = Depends(get_session)):
+    if not settings.enable_public_register:
+        raise HTTPException(status_code=403, detail="Public registration is disabled")
     if get_user_by_email(session, data.email):
         raise HTTPException(status_code=400, detail="Email already registered")
     user = User(
