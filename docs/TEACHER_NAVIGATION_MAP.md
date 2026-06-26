@@ -63,6 +63,14 @@ Teacher-only pages are not included in student navigation.
 3. Create assignment
 4. Review submissions
 
+### E) Targeted practice by taxonomy
+
+1. Open Question Bank (`/teacher/questions`)
+2. Filter by unit/topic/skill/type/difficulty/taxonomy tags
+3. Open Assignment Create (`/teacher/assignments/new`)
+4. Build a compact targeted assignment
+5. Review outcomes in Submissions + Analytics
+
 ## Route Purpose Summary
 
 - `/dashboard`: Teacher command center (quick actions + dashboard stats + analytics section)
@@ -92,3 +100,9 @@ Teacher-only pages are not included in student navigation.
   - student question solving pages
 
 The app should keep teacher guidance and audit notes on teacher pages only, not in student practice views.
+
+## Safety Notes
+
+- Students must not see teacher-only navigation links.
+- Students must not see answer keys or hidden expected outputs before submission.
+- Teacher-only review notes (for example imported-answer audit reminders) stay on teacher pages.

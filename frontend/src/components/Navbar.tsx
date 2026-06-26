@@ -23,7 +23,64 @@ export function Navbar() {
     router.push("/login");
   };
 
-  if (!user) return null;
+  if (!user) {
+    const publicLinks: NavLinkItem[] = [
+      {
+        href: "/",
+        label: "Home",
+        isActive: (path) => path === "/",
+      },
+      {
+        href: "/login",
+        label: "Login",
+        isActive: (path) => path === "/login",
+      },
+      {
+        href: "/beta-notice",
+        label: "Beta Notice",
+        isActive: (path) => path === "/beta-notice",
+      },
+    ];
+    return (
+      <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <Link
+              href="/"
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            >
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center shadow-md">
+                <GraduationCap className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg text-slate-900 leading-tight">
+                  AP CSA Lab
+                </span>
+                <span className="text-xs text-slate-500 leading-tight">
+                  Practice Platform
+                </span>
+              </div>
+            </Link>
+            <div className="flex items-center gap-1">
+              {publicLinks.map((link) => {
+                const isActive = link.isActive(pathname);
+                return (
+                  <Button
+                    key={link.href}
+                    variant={isActive ? "default" : "ghost"}
+                    size="sm"
+                    asChild
+                  >
+                    <Link href={link.href}>{link.label}</Link>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   const isTeacher = user.role === "teacher";
 

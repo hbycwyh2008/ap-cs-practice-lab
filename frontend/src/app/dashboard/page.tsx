@@ -216,24 +216,26 @@ export default function DashboardPage() {
                     {[
                       {
                         title: "Start Class Setup",
-                        desc: "Create class and bulk-create student accounts.",
+                        desc: "Create class, bulk-create students, and save credentials.",
                         links: [
                           { href: "/teacher/classes/new", label: "Create Class" },
                           { href: "/teacher/classes", label: "Bulk Create Students" },
+                          { href: "/teacher/classes", label: "Save Student Credentials" },
                         ],
                       },
                       {
                         title: "Build Question Bank",
-                        desc: "Manage FRQ and MCQ question collections.",
+                        desc: "Manage FRQ/MCQ questions and taxonomy tags.",
                         links: [
                           { href: "/teacher/questions", label: "Question Bank" },
                           { href: "/teacher/questions/import", label: "Import FRQ" },
                           { href: "/teacher/questions/import-mcq", label: "Import MCQ" },
+                          { href: "/teacher/questions/new", label: "Create Single Question" },
                         ],
                       },
                       {
                         title: "Assign Practice",
-                        desc: "Create and manage classroom assignments.",
+                        desc: "Create assignments and target practice by taxonomy filters.",
                         links: [
                           { href: "/teacher/assignments/new", label: "Create Assignment" },
                           { href: "/teacher/assignments", label: "View Assignments" },
@@ -245,6 +247,7 @@ export default function DashboardPage() {
                         links: [
                           { href: "/teacher/submissions", label: "View Submissions" },
                           { href: "/teacher/analytics", label: "View Analytics" },
+                          { href: "/teacher/analytics", label: "Export CSV" },
                         ],
                       },
                     ].map((section) => (
@@ -341,7 +344,7 @@ export default function DashboardPage() {
                         {assignments.slice(0, 5).map((a) => (
                           <Link
                             key={a.id}
-                            href={`/teacher/assignments/${a.id}`}
+                            href="/teacher/assignments"
                             className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-lg border transition-colors group"
                           >
                             <div className="flex-1">
