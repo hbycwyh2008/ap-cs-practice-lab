@@ -167,11 +167,11 @@ export function Navbar() {
   return (
     <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center h-16 gap-3">
           {/* Logo */}
           <Link
             href="/dashboard"
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0"
           >
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center shadow-md">
               <GraduationCap className="w-6 h-6 text-white" />
@@ -187,29 +187,31 @@ export function Navbar() {
           </Link>
 
           {/* Navigation Links */}
-          <div className="hidden md:flex items-center gap-1">
-            {links.map((link) => {
-              const isActive = link.isActive(pathname);
-              return (
-                <Button
-                  key={link.href}
-                  variant={isActive ? "default" : "ghost"}
-                  size="sm"
-                  asChild
-                  className={
-                    isActive
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "hover:bg-slate-100"
-                  }
-                >
-                  <Link href={link.href}>{link.label}</Link>
-                </Button>
-              );
-            })}
+          <div className="hidden lg:flex flex-1 min-w-0 overflow-x-auto">
+            <div className="flex items-center gap-1 min-w-max pr-2">
+              {links.map((link) => {
+                const isActive = link.isActive(pathname);
+                return (
+                  <Button
+                    key={link.href}
+                    variant={isActive ? "default" : "ghost"}
+                    size="sm"
+                    asChild
+                    className={
+                      isActive
+                        ? "bg-blue-600 hover:bg-blue-700"
+                        : "hover:bg-slate-100"
+                    }
+                  >
+                    <Link href={link.href}>{link.label}</Link>
+                  </Button>
+                );
+              })}
+            </div>
           </div>
 
           {/* User Info & Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
             <div className="hidden sm:flex items-center gap-2">
               <Badge variant="outline" className="bg-blue-50 border-blue-200">
                 <Sparkles className="w-3 h-3 mr-1" />
@@ -222,7 +224,7 @@ export function Navbar() {
                 {user.role}
               </Badge>
             </div>
-            <div className="hidden sm:block text-sm text-slate-700 font-medium">
+            <div className="hidden xl:block text-sm text-slate-700 font-medium max-w-[180px] truncate">
               {user.email}
             </div>
             <Button
@@ -236,7 +238,7 @@ export function Navbar() {
             </Button>
           </div>
         </div>
-        <div className="md:hidden pb-3 overflow-x-auto">
+        <div className="lg:hidden pb-3 overflow-x-auto">
           <div className="flex items-center gap-1 min-w-max">
             {links.map((link) => {
               const isActive = link.isActive(pathname);

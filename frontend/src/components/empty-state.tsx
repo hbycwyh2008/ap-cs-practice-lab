@@ -26,11 +26,14 @@ export function EmptyState({
 }: EmptyStateProps) {
   const renderIcon = () => {
     if (!icon) return null;
-    if (typeof icon === "function") {
+    if (React.isValidElement(icon)) {
+      return icon;
+    }
+    if (typeof icon === "function" || typeof icon === "object") {
       const IconComponent = icon as React.ElementType;
       return <IconComponent className="w-8 h-8" />;
     }
-    return icon;
+    return null;
   };
 
   const renderAction = () => {

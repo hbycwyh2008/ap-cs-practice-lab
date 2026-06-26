@@ -12,7 +12,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  GraduationCap,
   Code,
   CheckCircle2,
   BarChart3,
@@ -28,30 +27,6 @@ import {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center shadow-md">
-                <GraduationCap className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-lg text-slate-900 leading-tight">
-                  AP CSA Lab
-                </span>
-                <span className="text-xs text-slate-500 leading-tight">
-                  Practice Platform
-                </span>
-              </div>
-            </div>
-            <Button asChild>
-              <Link href="/login">Get Started</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section - Two Column */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
