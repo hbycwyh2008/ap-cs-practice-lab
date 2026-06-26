@@ -29,6 +29,12 @@ export interface Question {
   reference_solution: string | null;
   max_points: number;
   skill: string | null;
+  practice_type?: string | null;
+  frq_type?: string;
+  error_pattern?: string | null;
+  recommended_use?: string | null;
+  source_type?: string;
+  visibility?: string;
   estimated_minutes: number;
   source: string | null;
   is_active: boolean;
@@ -75,6 +81,12 @@ export interface ImportedQuestion {
   method_signature: string;
   estimated_minutes?: number;
   source?: string;
+  practice_type?: string;
+  frq_type?: string;
+  error_pattern?: string;
+  recommended_use?: string;
+  source_type?: string;
+  visibility?: string;
   reference_solution?: string | null;
   test_cases: ImportedTestCase[];
 }
@@ -99,6 +111,15 @@ export interface ImportedMCQQuestion {
     label: string;
     text?: string;
   };
+  unit?: string;
+  topic?: string;
+  skill?: string;
+  difficulty?: string;
+  practice_type?: string;
+  error_pattern?: string;
+  recommended_use?: string;
+  source_type?: string;
+  visibility?: string;
 }
 
 export interface ImportedMCQBank {
@@ -111,6 +132,12 @@ export interface ImportedMCQBank {
   topic?: string;
   skill?: string;
   difficulty?: string;
+  practice_type?: string;
+  frq_type?: string;
+  error_pattern?: string;
+  recommended_use?: string;
+  source_type?: string;
+  visibility?: string;
   estimated_minutes?: number;
   source?: string;
   max_points?: number;
@@ -383,6 +410,8 @@ export const api = {
     due_at?: string;
     course?: string;
     units?: string[];
+    topics?: string[];
+    question_types?: string[];
     difficulties?: string[];
     skills?: string[];
     question_count: number;

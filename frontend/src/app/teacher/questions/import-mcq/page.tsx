@@ -19,11 +19,20 @@ const SAMPLE_MCQ_IMPORT: ImportedMCQBank = {
   title: "AP Computer Science A Practice Question Bank",
   section: "I — Multiple Choice",
   question_count: 2,
+  unit: "Unit 2: Selection and Iteration",
+  topic: "Loop Tracing",
+  skill: "for loop traversal",
+  difficulty: "medium",
+  practice_type: "MCQ_TRACE_OUTPUT",
+  recommended_use: "QUIZ",
+  source_type: "TEACHER_CREATED",
+  visibility: "PRIVATE_CLASSROOM",
   questions: [
     {
       id: 1,
       section: "I",
       type: "multiple_choice",
+      error_pattern: "OFF_BY_ONE",
       prompt: "What is the value of result after this code runs?\n\nint result = 0;\nfor (int num : nums) {\n    if (num > 0) {\n        result += num;\n    }\n}",
       choices: [
         { label: "A", text: "The number of positive values in nums" },
@@ -40,6 +49,7 @@ const SAMPLE_MCQ_IMPORT: ImportedMCQBank = {
       id: 2,
       section: "I",
       type: "multiple_choice",
+      error_pattern: "INTEGER_DIVISION",
       prompt: "Which expression is true when n is even?",
       choices: [
         { label: "A", text: "n / 2 == 0" },

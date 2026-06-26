@@ -1,0 +1,141 @@
+{
+  "frq_import_format": [
+    {
+      "title": "Count Values Greater Than Target",
+      "description": "Write a method that returns how many values in nums are greater than 10.",
+      "course": "AP_CSA",
+      "unit": "Unit 4: Data Collections",
+      "topic": "array traversal",
+      "skill": "conditional counting",
+      "difficulty": "easy",
+      "practice_type": "FRQ_SMALL_FUNCTION",
+      "frq_type": "FRQ_Q1_METHOD_CONTROL",
+      "error_pattern": "LOOP_CONDITION_ERROR",
+      "recommended_use": "WARM_UP",
+      "source_type": "TEACHER_CREATED",
+      "visibility": "PRIVATE_CLASSROOM",
+      "starter_code": "public class Solution {\\n    public int solve(int[] nums) {\\n        // TODO\\n        return 0;\\n    }\\n}",
+      "method_signature": "public int solve(int[] nums)",
+      "estimated_minutes": 10,
+      "source": "Teacher-created demo",
+      "test_cases": [
+        {
+          "name": "public mixed values",
+          "input_json": "{\"nums\":[5,11,3,20]}",
+          "expected_output": "2",
+          "points": 3,
+          "hidden": false
+        },
+        {
+          "name": "hidden none greater",
+          "input_json": "{\"nums\":[1,2,3]}",
+          "expected_output": "0",
+          "points": 4,
+          "hidden": true
+        },
+        {
+          "name": "hidden boundary values",
+          "input_json": "{\"nums\":[10,11,10,12]}",
+          "expected_output": "2",
+          "points": 3,
+          "hidden": true
+        }
+      ]
+    },
+    {
+      "title": "Return Last Even Number",
+      "description": "Write a method that returns the last even number in nums. You may assume at least one even number exists.",
+      "course": "AP_CSA",
+      "unit": "Unit 4: Data Collections",
+      "topic": "array traversal",
+      "skill": "tracking latest match",
+      "difficulty": "medium",
+      "practice_type": "DEBUGGING_DRILL",
+      "frq_type": "FRQ_Q1_METHOD_CONTROL",
+      "error_pattern": "WRONG_INITIAL_VALUE",
+      "recommended_use": "HOMEWORK",
+      "source_type": "TEACHER_CREATED",
+      "visibility": "PRIVATE_CLASSROOM",
+      "starter_code": "public class Solution {\\n    public int solve(int[] nums) {\\n        int answer = nums[0];\\n        // TODO\\n        return answer;\\n    }\\n}",
+      "method_signature": "public int solve(int[] nums)",
+      "estimated_minutes": 12,
+      "source": "Teacher-created demo",
+      "test_cases": [
+        {
+          "name": "public simple case",
+          "input_json": "{\"nums\":[1,4,3,8]}",
+          "expected_output": "8",
+          "points": 3,
+          "hidden": false
+        },
+        {
+          "name": "hidden first and last even",
+          "input_json": "{\"nums\":[2,5,7,10]}",
+          "expected_output": "10",
+          "points": 4,
+          "hidden": true
+        },
+        {
+          "name": "hidden negative even",
+          "input_json": "{\"nums\":[-3,-2,-5]}",
+          "expected_output": "-2",
+          "points": 3,
+          "hidden": true
+        }
+      ]
+    }
+  ],
+  "mcq_import_format": {
+    "title": "Teacher-Created AP CSA MCQ Demo",
+    "section": "I",
+    "question_count": 2,
+    "course": "AP_CSA",
+    "unit": "Unit 2: Selection and Iteration",
+    "topic": "for loop traversal",
+    "skill": "loop tracing",
+    "difficulty": "medium",
+    "practice_type": "MCQ_TRACE_OUTPUT",
+    "error_pattern": "OFF_BY_ONE",
+    "recommended_use": "QUIZ",
+    "source_type": "TEACHER_CREATED",
+    "visibility": "PRIVATE_CLASSROOM",
+    "questions": [
+      {
+        "id": 1,
+        "section": "I",
+        "type": "multiple_choice",
+        "prompt": "What is the value of count after this loop runs? int count = 0; for (int i = 0; i < 5; i++) { count++; }",
+        "choices": [
+          { "label": "A", "text": "4" },
+          { "label": "B", "text": "5" },
+          { "label": "C", "text": "6" },
+          { "label": "D", "text": "10" }
+        ],
+        "answer": { "label": "B", "text": "5" },
+        "practice_type": "MCQ_TRACE_OUTPUT",
+        "error_pattern": "OFF_BY_ONE",
+        "recommended_use": "WARM_UP",
+        "source_type": "TEACHER_CREATED",
+        "visibility": "PRIVATE_CLASSROOM"
+      },
+      {
+        "id": 2,
+        "section": "I",
+        "type": "multiple_choice",
+        "prompt": "Which condition correctly checks that n is between 1 and 10 inclusive?",
+        "choices": [
+          { "label": "A", "text": "n > 1 && n < 10" },
+          { "label": "B", "text": "n >= 1 && n <= 10" },
+          { "label": "C", "text": "n == 1 || n == 10" },
+          { "label": "D", "text": "n >= 1 || n <= 10" }
+        ],
+        "answer": { "label": "B", "text": "n >= 1 && n <= 10" },
+        "practice_type": "MCQ_CONCEPT_CHECK",
+        "error_pattern": "LOOP_CONDITION_ERROR",
+        "recommended_use": "FIRST_PRACTICE",
+        "source_type": "TEACHER_CREATED",
+        "visibility": "PRIVATE_CLASSROOM"
+      }
+    ]
+  }
+}

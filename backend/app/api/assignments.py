@@ -147,10 +147,17 @@ def generate_assignment(
         Question.created_by == current_user.id,
         Question.is_active == True,
         Question.course == data.course,
-        Question.type == QuestionType.FRQ_CODE,
     )
+    if data.question_types:
+        stmt = stmt.where(Question.type.in_(data.question_types))
+    else:
+        stmt = stmt.where(Question.type == QuestionType.FRQ_CODE)
     if data.units:
         stmt = stmt.where(Question.unit.in_(data.units))
+    if data.topics:
+        stmt = stmt.where(Question.topic.in_(data.topics))
+    if data.question_types:
+        stmt = stmt.where(Question.type.in_(data.question_types))
     if data.difficulties:
         stmt = stmt.where(Question.difficulty.in_(data.difficulties))
     if data.skills:

@@ -943,6 +943,60 @@ assignments during regression checks and archives temporary questions and delete
 
 Current scope: **AP_CSA** / **FRQ_CODE** / `public int solve(int[] nums)` only.
 
+## Milestone 4.6: Knowledge Taxonomy Foundation
+
+This milestone adds a safe, classroom-focused taxonomy foundation for AP CSA question bank architecture.
+
+### Taxonomy Metadata (Question-Level)
+
+Questions now support optional metadata fields:
+
+- `practice_type`
+- `frq_type`
+- `error_pattern`
+- `recommended_use`
+- `source_type`
+- `visibility`
+
+Compatibility defaults:
+
+- `frq_type = NONE`
+- `source_type = TEACHER_CREATED`
+- `visibility = PRIVATE_CLASSROOM`
+
+### Import Workflow Compatibility
+
+- FRQ structured import (`POST /questions/import`) supports optional taxonomy metadata fields.
+- MCQ structured import (`POST /questions/import-mcq`) supports optional taxonomy metadata at bank level and per-question level.
+- Legacy FRQ/MCQ JSON remains compatible.
+
+### Teacher Workflow Improvements
+
+- Question bank supports filter-based browsing by:
+  - Unit
+  - Topic
+  - Skill
+  - Question Type
+  - Difficulty
+  - Practice Type
+  - FRQ Type
+  - Error Pattern
+  - Visibility
+- Assignment creation supports selecting questions by:
+  - Unit
+  - Topic
+  - Skill
+  - Type
+  - Difficulty
+
+### Documentation Added
+
+- [AP CSA Knowledge Taxonomy](docs/AP_CSA_KNOWLEDGE_TAXONOMY.md)
+- [Content Safety and Publication Policy](docs/CONTENT_SAFETY_AND_PUBLICATION_POLICY.md)
+- [Compact Practice Set Design](docs/COMPACT_PRACTICE_SET_DESIGN.md)
+- [Reference to Original Question Workflow](docs/REFERENCE_TO_ORIGINAL_QUESTION_WORKFLOW.md)
+- [Sample Taxonomy Tagged Questions](docs/sample-taxonomy-tagged-questions.json)
+
 ## Current MVP Limitations
 
 - Only supports `public int solve(int[] nums)` method signature
@@ -1023,6 +1077,7 @@ Current scope: **AP_CSA** / **FRQ_CODE** / `public int solve(int[] nums)` only.
 - [x] Student dashboard with average score
 - [x] Seed data script (6 sample AP CSA questions)
 - [x] Question tags (skill, estimated_minutes, source, is_active)
+- [x] Extended taxonomy tags (practice_type, frq_type, error_pattern, recommended_use, source_type, visibility)
 - [x] Auto-generated assignments from unit / difficulty / skill filters
 
 ## Reserved for Future Development

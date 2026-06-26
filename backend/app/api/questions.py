@@ -102,12 +102,6 @@ def _validate_mcq_import_batch(data: ImportedMCQBank) -> list[dict]:
         errors.append(str(exc))
         course = Course.AP_CSA
 
-    try:
-        difficulty = _normalize_difficulty(data.difficulty)
-    except ValueError as exc:
-        errors.append(str(exc))
-        difficulty = Difficulty.MEDIUM
-
     for index, item in enumerate(data.questions):
         label = f"question {index + 1}"
         if item.type.strip().lower() != "multiple_choice":
@@ -123,12 +117,28 @@ def _validate_mcq_import_batch(data: ImportedMCQBank) -> list[dict]:
                 f"{label}: answer.label must match one of the choice labels"
             )
 
+        question_difficulty = item.difficulty or data.difficulty
+        try:
+            difficulty = _normalize_difficulty(question_difficulty)
+        except ValueError as exc:
+            errors.append(f"{label}: {exc}")
+            difficulty = Difficulty.MEDIUM
+
         normalized.append(
             {
                 "question": item,
                 "course": course,
                 "difficulty": difficulty,
                 "answer_label": answer_label,
+                "unit": (item.unit or data.unit).strip(),
+                "topic": (item.topic or data.topic).strip(),
+                "skill": (item.skill or data.skill).strip(),
+                "practice_type": item.practice_type or data.practice_type,
+                "error_pattern": item.error_pattern or data.error_pattern,
+                "recommended_use": item.recommended_use or data.recommended_use,
+                "source_type": item.source_type or data.source_type,
+                "visibility": item.visibility or data.visibility,
+                "frq_type": data.frq_type,
             }
         )
 
@@ -222,6 +232,12 @@ def import_questions(
                 reference_solution=item.reference_solution,
                 max_points=normalized["max_points"],
                 skill=item.skill,
+                practice_type=item.practice_type,
+                frq_type=item.frq_type,
+                error_pattern=item.error_pattern,
+                recommended_use=item.recommended_use,
+                source_type=item.source_type,
+                visibility=item.visibility,
                 estimated_minutes=item.estimated_minutes,
                 source=item.source,
                 created_by=current_user.id,
@@ -275,15 +291,21 @@ def import_multiple_choice_questions(
             question = Question(
                 title=_mcq_title(data.title, item),
                 course=normalized["course"],
-                unit=data.unit.strip(),
-                topic=data.topic.strip(),
+                unit=normalized["unit"],
+                topic=normalized["topic"],
                 difficulty=normalized["difficulty"],
                 type=QuestionType.MULTIPLE_CHOICE,
                 prompt=item.prompt.strip(),
                 starter_code="",
                 reference_solution=None,
                 max_points=data.max_points,
-                skill=data.skill.strip(),
+                skill=normalized["skill"],
+                practice_type=normalized["practice_type"],
+                frq_type=normalized["frq_type"],
+                error_pattern=normalized["error_pattern"],
+                recommended_use=normalized["recommended_use"],
+                source_type=normalized["source_type"],
+                visibility=normalized["visibility"],
                 estimated_minutes=data.estimated_minutes,
                 source=source,
                 created_by=current_user.id,

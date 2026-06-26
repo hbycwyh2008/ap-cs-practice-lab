@@ -24,6 +24,12 @@ export default function NewQuestionPage() {
     topic: "",
     difficulty: "easy",
     skill: "traversal",
+    practice_type: "FRQ_SMALL_FUNCTION",
+    frq_type: "NONE",
+    error_pattern: "",
+    recommended_use: "HOMEWORK",
+    source_type: "TEACHER_CREATED",
+    visibility: "PRIVATE_CLASSROOM",
     estimated_minutes: 10,
     source: "teacher-created",
     is_active: true,
@@ -84,6 +90,64 @@ export default function NewQuestionPage() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
+            <label className="block text-sm font-medium mb-1">Practice Type</label>
+            <select
+              value={form.practice_type}
+              onChange={(e) => setForm({ ...form, practice_type: e.target.value })}
+              className="w-full border rounded-md px-3 py-2"
+            >
+              <option value="MCQ_TRACE_OUTPUT">MCQ_TRACE_OUTPUT</option>
+              <option value="MCQ_CONCEPT_CHECK">MCQ_CONCEPT_CHECK</option>
+              <option value="MCQ_ERROR_ANALYSIS">MCQ_ERROR_ANALYSIS</option>
+              <option value="MCQ_CODE_COMPLETION">MCQ_CODE_COMPLETION</option>
+              <option value="MCQ_DESIGN_REASONING">MCQ_DESIGN_REASONING</option>
+              <option value="FRQ_SMALL_FUNCTION">FRQ_SMALL_FUNCTION</option>
+              <option value="FRQ_FULL_RESPONSE">FRQ_FULL_RESPONSE</option>
+              <option value="DEBUGGING_DRILL">DEBUGGING_DRILL</option>
+              <option value="EDGE_CASE_DRILL">EDGE_CASE_DRILL</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">FRQ Type</label>
+            <select
+              value={form.frq_type}
+              onChange={(e) => setForm({ ...form, frq_type: e.target.value })}
+              className="w-full border rounded-md px-3 py-2"
+            >
+              <option value="NONE">NONE</option>
+              <option value="FRQ_Q1_METHOD_CONTROL">FRQ_Q1_METHOD_CONTROL</option>
+              <option value="FRQ_Q2_CLASS">FRQ_Q2_CLASS</option>
+              <option value="FRQ_Q3_ARRAYLIST">FRQ_Q3_ARRAYLIST</option>
+              <option value="FRQ_Q4_2D_ARRAY">FRQ_Q4_2D_ARRAY</option>
+            </select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field
+            label="Error Pattern"
+            value={form.error_pattern}
+            onChange={(v) => setForm({ ...form, error_pattern: v })}
+          />
+          <div>
+            <label className="block text-sm font-medium mb-1">Recommended Use</label>
+            <select
+              value={form.recommended_use}
+              onChange={(e) => setForm({ ...form, recommended_use: e.target.value })}
+              className="w-full border rounded-md px-3 py-2"
+            >
+              <option value="FIRST_PRACTICE">FIRST_PRACTICE</option>
+              <option value="WARM_UP">WARM_UP</option>
+              <option value="HOMEWORK">HOMEWORK</option>
+              <option value="QUIZ">QUIZ</option>
+              <option value="EXAM_REVIEW">EXAM_REVIEW</option>
+              <option value="FRQ_DRILL">FRQ_DRILL</option>
+              <option value="REMEDIATION">REMEDIATION</option>
+              <option value="CHALLENGE">CHALLENGE</option>
+            </select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
             <label className="block text-sm font-medium mb-1">Estimated Minutes</label>
             <input
               type="number"
@@ -95,6 +159,34 @@ export default function NewQuestionPage() {
             />
           </div>
           <Field label="Source" value={form.source} onChange={(v) => setForm({ ...form, source: v })} />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Source Type</label>
+            <select
+              value={form.source_type}
+              onChange={(e) => setForm({ ...form, source_type: e.target.value })}
+              className="w-full border rounded-md px-3 py-2"
+            >
+              <option value="TEACHER_CREATED">TEACHER_CREATED</option>
+              <option value="SYNTHETIC">SYNTHETIC</option>
+              <option value="LICENSED_PRIVATE">LICENSED_PRIVATE</option>
+              <option value="PUBLIC_DOMAIN">PUBLIC_DOMAIN</option>
+              <option value="OFFICIAL_REFERENCE_ONLY">OFFICIAL_REFERENCE_ONLY</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Visibility</label>
+            <select
+              value={form.visibility}
+              onChange={(e) => setForm({ ...form, visibility: e.target.value })}
+              className="w-full border rounded-md px-3 py-2"
+            >
+              <option value="PRIVATE_CLASSROOM">PRIVATE_CLASSROOM</option>
+              <option value="INTERNAL_REVIEW">INTERNAL_REVIEW</option>
+              <option value="PUBLIC_SAMPLE">PUBLIC_SAMPLE</option>
+            </select>
+          </div>
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input

@@ -11,6 +11,83 @@ from app.models import (
     UserRole,
 )
 
+PRACTICE_TYPES = {
+    "MCQ_TRACE_OUTPUT",
+    "MCQ_CONCEPT_CHECK",
+    "MCQ_ERROR_ANALYSIS",
+    "MCQ_CODE_COMPLETION",
+    "MCQ_DESIGN_REASONING",
+    "FRQ_SMALL_FUNCTION",
+    "FRQ_FULL_RESPONSE",
+    "DEBUGGING_DRILL",
+    "EDGE_CASE_DRILL",
+}
+
+FRQ_TYPES = {
+    "FRQ_Q1_METHOD_CONTROL",
+    "FRQ_Q2_CLASS",
+    "FRQ_Q3_ARRAYLIST",
+    "FRQ_Q4_2D_ARRAY",
+    "NONE",
+}
+
+ERROR_PATTERNS = {
+    "OFF_BY_ONE",
+    "ASSIGNMENT_VS_EQUALITY",
+    "INTEGER_DIVISION",
+    "STRING_COMPARISON",
+    "ARRAY_INDEX_OUT_OF_BOUNDS",
+    "ARRAYLIST_REMOVE_SHIFT",
+    "NULL_REFERENCE",
+    "SCOPE_ERROR",
+    "MISSING_RETURN",
+    "WRONG_INITIAL_VALUE",
+    "LOOP_CONDITION_ERROR",
+    "HIDDEN_EDGE_CASE_FAILED",
+}
+
+RECOMMENDED_USES = {
+    "FIRST_PRACTICE",
+    "WARM_UP",
+    "HOMEWORK",
+    "QUIZ",
+    "EXAM_REVIEW",
+    "FRQ_DRILL",
+    "REMEDIATION",
+    "CHALLENGE",
+}
+
+SOURCE_TYPES = {
+    "TEACHER_CREATED",
+    "SYNTHETIC",
+    "LICENSED_PRIVATE",
+    "PUBLIC_DOMAIN",
+    "OFFICIAL_REFERENCE_ONLY",
+}
+
+VISIBILITY_TYPES = {
+    "PUBLIC_SAMPLE",
+    "PRIVATE_CLASSROOM",
+    "INTERNAL_REVIEW",
+}
+
+
+def _validate_enum_text(
+    value: Optional[str],
+    allowed: set[str],
+    field_name: str,
+) -> Optional[str]:
+    if value is None:
+        return None
+    normalized = value.strip().upper()
+    if not normalized:
+        return None
+    if normalized not in allowed:
+        raise ValueError(
+            f"{field_name} must be one of: {', '.join(sorted(allowed))}"
+        )
+    return normalized
+
 
 # Auth
 class UserRegister(BaseModel):
@@ -95,6 +172,12 @@ class QuestionCreate(BaseModel):
     reference_solution: Optional[str] = None
     max_points: int = 0
     skill: Optional[str] = "traversal"
+    practice_type: Optional[str] = None
+    frq_type: str = "NONE"
+    error_pattern: Optional[str] = None
+    recommended_use: Optional[str] = None
+    source_type: str = "TEACHER_CREATED"
+    visibility: str = "PRIVATE_CLASSROOM"
     estimated_minutes: int = 10
     source: Optional[str] = "teacher-created"
     is_active: bool = True
@@ -110,6 +193,12 @@ class QuestionUpdate(BaseModel):
     reference_solution: Optional[str] = None
     max_points: Optional[int] = None
     skill: Optional[str] = None
+    practice_type: Optional[str] = None
+    frq_type: Optional[str] = None
+    error_pattern: Optional[str] = None
+    recommended_use: Optional[str] = None
+    source_type: Optional[str] = None
+    visibility: Optional[str] = None
     estimated_minutes: Optional[int] = None
     source: Optional[str] = None
     is_active: Optional[bool] = None
@@ -138,6 +227,12 @@ class QuestionRead(BaseModel):
     reference_solution: Optional[str]
     max_points: int
     skill: Optional[str]
+    practice_type: Optional[str]
+    frq_type: str
+    error_pattern: Optional[str]
+    recommended_use: Optional[str]
+    source_type: str
+    visibility: str
     estimated_minutes: int
     source: Optional[str]
     is_active: bool
@@ -227,6 +322,12 @@ class ImportedQuestion(BaseModel):
     method_signature: str
     estimated_minutes: int = 10
     source: Optional[str] = "structured-import"
+    practice_type: Optional[str] = None
+    frq_type: str = "NONE"
+    error_pattern: Optional[str] = None
+    recommended_use: Optional[str] = None
+    source_type: str = "TEACHER_CREATED"
+    visibility: str = "PRIVATE_CLASSROOM"
     reference_solution: Optional[str] = None
     test_cases: list[ImportedTestCase]
 
@@ -257,6 +358,39 @@ class ImportedQuestion(BaseModel):
         if not value:
             raise ValueError("at least one test case is required")
         return value
+
+    @field_validator("practice_type")
+    @classmethod
+    def validate_practice_type(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_enum_text(value, PRACTICE_TYPES, "practice_type")
+
+    @field_validator("frq_type")
+    @classmethod
+    def validate_frq_type(cls, value: str) -> str:
+        normalized = _validate_enum_text(value, FRQ_TYPES, "frq_type")
+        return normalized or "NONE"
+
+    @field_validator("error_pattern")
+    @classmethod
+    def validate_error_pattern(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_enum_text(value, ERROR_PATTERNS, "error_pattern")
+
+    @field_validator("recommended_use")
+    @classmethod
+    def validate_recommended_use(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_enum_text(value, RECOMMENDED_USES, "recommended_use")
+
+    @field_validator("source_type")
+    @classmethod
+    def validate_source_type(cls, value: str) -> str:
+        normalized = _validate_enum_text(value, SOURCE_TYPES, "source_type")
+        return normalized or "TEACHER_CREATED"
+
+    @field_validator("visibility")
+    @classmethod
+    def validate_visibility(cls, value: str) -> str:
+        normalized = _validate_enum_text(value, VISIBILITY_TYPES, "visibility")
+        return normalized or "PRIVATE_CLASSROOM"
 
 
 class QuestionImportResponse(BaseModel):
@@ -295,6 +429,15 @@ class ImportedMCQQuestion(BaseModel):
     prompt: str
     choices: list[ImportedMCQChoice]
     answer: ImportedMCQAnswer
+    unit: Optional[str] = None
+    topic: Optional[str] = None
+    skill: Optional[str] = None
+    difficulty: Optional[str] = None
+    practice_type: Optional[str] = None
+    error_pattern: Optional[str] = None
+    recommended_use: Optional[str] = None
+    source_type: Optional[str] = None
+    visibility: Optional[str] = None
 
     @field_validator("prompt", "type")
     @classmethod
@@ -312,6 +455,31 @@ class ImportedMCQQuestion(BaseModel):
             raise ValueError("at least two choices are required")
         return value
 
+    @field_validator("practice_type")
+    @classmethod
+    def validate_practice_type(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_enum_text(value, PRACTICE_TYPES, "practice_type")
+
+    @field_validator("error_pattern")
+    @classmethod
+    def validate_error_pattern(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_enum_text(value, ERROR_PATTERNS, "error_pattern")
+
+    @field_validator("recommended_use")
+    @classmethod
+    def validate_recommended_use(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_enum_text(value, RECOMMENDED_USES, "recommended_use")
+
+    @field_validator("source_type")
+    @classmethod
+    def validate_source_type(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_enum_text(value, SOURCE_TYPES, "source_type")
+
+    @field_validator("visibility")
+    @classmethod
+    def validate_visibility(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_enum_text(value, VISIBILITY_TYPES, "visibility")
+
 
 class ImportedMCQBank(BaseModel):
     title: str
@@ -319,10 +487,16 @@ class ImportedMCQBank(BaseModel):
     question_count: Optional[int] = None
     questions: list[ImportedMCQQuestion]
     course: str = "AP_CSA"
-    unit: str = "Multiple Choice"
+    unit: str = "Uncategorized"
     topic: str = "Multiple Choice"
-    skill: str = "AP CSA multiple choice"
+    skill: str = "AP CSA MCQ Practice"
     difficulty: str = "medium"
+    practice_type: str = "MCQ_CONCEPT_CHECK"
+    frq_type: str = "NONE"
+    error_pattern: Optional[str] = None
+    recommended_use: Optional[str] = None
+    source_type: str = "TEACHER_CREATED"
+    visibility: str = "PRIVATE_CLASSROOM"
     estimated_minutes: int = 2
     source: Optional[str] = None
     max_points: int = 1
@@ -349,6 +523,40 @@ class ImportedMCQBank(BaseModel):
         if value <= 0:
             raise ValueError("value must be positive")
         return value
+
+    @field_validator("practice_type")
+    @classmethod
+    def validate_practice_type(cls, value: str) -> str:
+        normalized = _validate_enum_text(value, PRACTICE_TYPES, "practice_type")
+        return normalized or "MCQ_CONCEPT_CHECK"
+
+    @field_validator("frq_type")
+    @classmethod
+    def validate_frq_type(cls, value: str) -> str:
+        normalized = _validate_enum_text(value, FRQ_TYPES, "frq_type")
+        return normalized or "NONE"
+
+    @field_validator("error_pattern")
+    @classmethod
+    def validate_error_pattern(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_enum_text(value, ERROR_PATTERNS, "error_pattern")
+
+    @field_validator("recommended_use")
+    @classmethod
+    def validate_recommended_use(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_enum_text(value, RECOMMENDED_USES, "recommended_use")
+
+    @field_validator("source_type")
+    @classmethod
+    def validate_source_type(cls, value: str) -> str:
+        normalized = _validate_enum_text(value, SOURCE_TYPES, "source_type")
+        return normalized or "TEACHER_CREATED"
+
+    @field_validator("visibility")
+    @classmethod
+    def validate_visibility(cls, value: str) -> str:
+        normalized = _validate_enum_text(value, VISIBILITY_TYPES, "visibility")
+        return normalized or "PRIVATE_CLASSROOM"
 
 
 # Assignments
@@ -409,6 +617,8 @@ class AssignmentGenerateRequest(BaseModel):
     due_at: Optional[datetime] = None
     course: Course = Course.AP_CSA
     units: list[str] = []
+    topics: list[str] = []
+    question_types: list[QuestionType] = []
     difficulties: list[Difficulty] = []
     skills: list[str] = []
     question_count: int
