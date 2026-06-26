@@ -99,7 +99,7 @@ def update_question(
 
 
 @router.delete("/{question_id}")
-def delete_question(
+def archive_question(
     question_id: int,
     session: Session = Depends(get_session),
     current_user: User = Depends(require_teacher),
@@ -109,6 +109,24 @@ def delete_question(
         raise HTTPException(status_code=404, detail="Question not found")
     if question.created_by != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
-    session.delete(question)
+    question.is_active = False
+    session.add(question)
     session.commit()
-    return {"ok": True}
+    return {"ok": True, "archived": True, "question_id": question_id}
+
+
+@router.post("/{question_id}/restore")
+def restore_question(
+    question_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_teacher),
+):
+    question = session.get(Question, question_id)
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+    if question.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    question.is_active = True
+    session.add(question)
+    session.commit()
+    return {"ok": True, "restored": True, "question_id": question_id}

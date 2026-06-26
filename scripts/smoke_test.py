@@ -277,6 +277,68 @@ def test_auto_generate(teacher_token, student_token):
     _delete_assignment(teacher_token, generated_id)
 
 
+def test_question_archive_restore(teacher_token, class_id):
+    print("11. Regression: question archive / restore lifecycle")
+
+    status, question = _request(
+        "POST",
+        "/questions",
+        token=teacher_token,
+        body={
+            "title": "Smoke Test Archive Question",
+            "unit": "Array",
+            "topic": "Lifecycle",
+            "difficulty": "easy",
+            "prompt": "Temporary question for archive smoke test.",
+            "starter_code": STARTER_CODE,
+        },
+    )
+    assert status == 200, f"POST /questions failed: {status} {question}"
+    qid = question["id"]
+
+    status, resp = _request("DELETE", f"/questions/{qid}", token=teacher_token)
+    assert status == 200, f"DELETE /questions/{qid} failed: {status} {resp}"
+    assert resp.get("archived") is True, f"Expected archived=True, got {resp}"
+    print(f"  [ok] archived question id={qid}")
+
+    status, q = _request("GET", f"/questions/{qid}", token=teacher_token)
+    assert status == 200, f"GET /questions/{qid} failed: {status} {q}"
+    assert q["is_active"] is False, f"Expected is_active=False, got {q['is_active']}"
+    print("  [ok] is_active == false after archive")
+
+    status, resp = _request(
+        "POST",
+        "/assignments",
+        token=teacher_token,
+        body={
+            "title": "Should Fail Assignment",
+            "description": "",
+            "class_id": class_id,
+            "questions": [{"question_id": qid, "order": 1, "points": 10}],
+        },
+    )
+    assert status == 400, (
+        f"Expected 400 when adding inactive question to assignment, got {status}: {resp}"
+    )
+    print("  [ok] inactive question blocked from assignment (400)")
+
+    status, resp = _request(
+        "POST", f"/questions/{qid}/restore", token=teacher_token
+    )
+    assert status == 200, f"POST /questions/{qid}/restore failed: {status} {resp}"
+    assert resp.get("restored") is True, f"Expected restored=True, got {resp}"
+    print(f"  [ok] restored question id={qid}")
+
+    status, q = _request("GET", f"/questions/{qid}", token=teacher_token)
+    assert status == 200, f"GET /questions/{qid} failed: {status} {q}"
+    assert q["is_active"] is True, f"Expected is_active=True, got {q['is_active']}"
+    print("  [ok] is_active == true after restore")
+
+    status, resp = _request("DELETE", f"/questions/{qid}", token=teacher_token)
+    assert status == 200, f"Final archive of question id={qid} failed: {status} {resp}"
+    print(f"  [ok] question id={qid} archived (cleanup)")
+
+
 def _find_seed_assignment(assignments):
     for a in assignments:
         if a.get("title") == "Array Traversal Practice":
@@ -347,6 +409,10 @@ def main():
     test_unassigned_question_forbidden(teacher_token, student_token, assignment_id)
 
     test_auto_generate(teacher_token, student_token)
+
+    status, classes = _request("GET", "/classes", token=teacher_token)
+    assert status == 200 and classes, f"GET /classes failed: {status} {classes}"
+    test_question_archive_restore(teacher_token, classes[0]["id"])
 
     print("\nSMOKE TEST PASSED")
 

@@ -161,7 +161,10 @@ export default function NewAssignmentPage() {
           <div>
             <label className="block text-sm font-medium mb-2">Questions</label>
             <div className="space-y-2 max-h-60 overflow-y-auto border rounded p-3">
-              {questions.map((q) => (
+              {activeQuestions.length === 0 && (
+                <p className="text-amber-700 text-sm">Create active questions before creating assignments.</p>
+              )}
+              {activeQuestions.map((q) => (
                 <label key={q.id} className="flex items-center gap-2 text-sm cursor-pointer">
                   <input type="checkbox" checked={manualForm.selectedQuestions.includes(q.id)} onChange={() => toggleQuestion(q.id)} />
                   {q.title} ({q.unit}, {q.skill}, {q.difficulty}) — {q.max_points} pts

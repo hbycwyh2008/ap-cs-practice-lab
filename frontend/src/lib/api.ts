@@ -192,6 +192,10 @@ export const api = {
     }),
   deleteQuestion: (id: number) =>
     request(`/questions/${id}`, { method: "DELETE" }),
+  archiveQuestion: (id: number) =>
+    request(`/questions/${id}`, { method: "DELETE" }),
+  restoreQuestion: (id: number) =>
+    request(`/questions/${id}/restore`, { method: "POST" }),
 
   getTestCases: (questionId: number) =>
     request<TestCase[]>(`/questions/${questionId}/test-cases`),

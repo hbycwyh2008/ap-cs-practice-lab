@@ -213,6 +213,21 @@ Teachers can auto-generate AP CSA assignments from the question bank using tags:
 Auto-generate and manual assignment creation both require that every selected
 question belongs to the current teacher and is active (`is_active == true`).
 
+### Question Lifecycle (Milestone 2.6)
+
+Questions are **soft-deleted** (archived), never hard-deleted:
+
+| Action | Endpoint | Effect |
+|--------|----------|--------|
+| Archive | `DELETE /questions/{id}` | Sets `is_active = false`. Question remains in DB. |
+| Restore | `POST /questions/{id}/restore` | Sets `is_active = true`. |
+
+- Archived questions are excluded from `POST /assignments/generate`.
+- Archived questions cannot be added to new assignments (returns 400).
+- Existing assignments and submissions referencing the question are **not affected**.
+- Teachers can restore an archived question at any time.
+- The teacher question list shows all questions with **Active** / **Archived** badges.
+
 ### Question tags
 
 Each question now includes:
