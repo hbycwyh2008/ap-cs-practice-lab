@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, SchoolClass, Assignment } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -71,12 +70,9 @@ export default function DashboardPage() {
 
   if (loading || loadingData) {
     return (
-      <>
-        <Navbar />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-muted-foreground">Loading dashboard...</p>
+      </div>
     );
   }
 
@@ -85,9 +81,7 @@ export default function DashboardPage() {
   const isTeacher = user.role === "teacher";
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           {/* Page Header */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -501,6 +495,5 @@ export default function DashboardPage() {
           </Alert>
         </div>
       </div>
-    </>
   );
 }

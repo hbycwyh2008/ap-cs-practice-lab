@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, SchoolClass } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,19 +38,14 @@ export default function ClassesPage() {
 
   if (loading || loadingData) {
     return (
-      <>
-        <Navbar />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <p className="text-muted-foreground">Loading classes...</p>
-        </div>
-      </>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-muted-foreground">Loading classes...</p>
+      </div>
     );
   }
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           <PageHeader
             title="Your Classes"
@@ -175,6 +169,5 @@ export default function ClassesPage() {
           )}
         </div>
       </div>
-    </>
   );
 }
