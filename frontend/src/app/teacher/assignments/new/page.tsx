@@ -35,8 +35,14 @@ export default function NewAssignmentPage() {
   const [saving, setSaving] = useState(false);
 
   const activeQuestions = questions.filter((q) => q.is_active !== false);
-  const unitOptions = [...new Set(activeQuestions.map((q) => q.unit).filter(Boolean))].sort();
-  const skillOptions = [...new Set(activeQuestions.map((q) => q.skill).filter(Boolean))].sort();
+  const unitOptions = Array.from(
+    new Set(activeQuestions.map((q) => q.unit).filter((unit): unit is string => Boolean(unit)))
+  ).sort();
+  const skillOptions = Array.from(
+    new Set(
+      activeQuestions.map((q) => q.skill).filter((skill): skill is string => Boolean(skill))
+    )
+  ).sort();
 
   useEffect(() => {
     if (user?.role === "teacher") {
@@ -101,7 +107,7 @@ export default function NewAssignmentPage() {
     setSaving(true);
     setError("");
     try {
-      const result = await api.generateAssignment({
+      await api.generateAssignment({
         title: autoForm.title,
         description: autoForm.description,
         class_id: autoForm.class_id,

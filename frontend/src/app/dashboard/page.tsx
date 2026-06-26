@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
 import {
   Users,
   BookOpen,
@@ -31,8 +30,6 @@ import {
   TrendingUp,
   Sparkles,
   CheckCircle2,
-  Clock,
-  AlertCircle,
   ArrowRight,
   BarChart3,
   Download,
@@ -156,7 +153,7 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-4xl font-bold text-blue-900">
-                      {classes.length}
+                      {dashboardStats?.class_count ?? classes.length}
                     </div>
                     <p className="text-xs text-blue-600 mt-2">
                       {classes.reduce((sum, c) => sum + (c.student_count || 0), 0)}{" "}
@@ -176,7 +173,7 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-4xl font-bold text-green-900">
-                      {assignments.length}
+                      {dashboardStats?.assignment_count ?? assignments.length}
                     </div>
                   </CardContent>
                 </Card>
@@ -396,21 +393,21 @@ export default function DashboardPage() {
                             {analytics.assignment_stats.map((stat) => (
                               <TableRow key={stat.assignment_id}>
                                 <TableCell className="font-medium">
-                                  {stat.assignment_title}
+                                  {stat.title}
                                 </TableCell>
-                                <TableCell>{stat.enrolled_count}</TableCell>
-                                <TableCell>{stat.completed_count}</TableCell>
+                                <TableCell>{stat.total_students}</TableCell>
+                                <TableCell>{stat.completed_students}</TableCell>
                                 <TableCell>
                                   <Badge
                                     variant={
-                                      stat.completion_rate >= 0.8
+                                      stat.completion_rate >= 80
                                         ? "default"
-                                        : stat.completion_rate >= 0.5
+                                        : stat.completion_rate >= 50
                                         ? "secondary"
                                         : "destructive"
                                     }
                                   >
-                                    {(stat.completion_rate * 100).toFixed(0)}%
+                                    {stat.completion_rate}%
                                   </Badge>
                                 </TableCell>
                               </TableRow>
@@ -441,32 +438,30 @@ export default function DashboardPage() {
                               <TableHead>Question</TableHead>
                               <TableHead>Attempts</TableHead>
                               <TableHead>Pass Rate</TableHead>
-                              <TableHead>Avg Tests</TableHead>
+                              <TableHead>Avg Score</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {analytics.question_stats.map((stat) => (
                               <TableRow key={stat.question_id}>
                                 <TableCell className="font-medium">
-                                  {stat.question_title}
+                                  {stat.title}
                                 </TableCell>
-                                <TableCell>{stat.attempt_count}</TableCell>
+                                <TableCell>{stat.submission_count}</TableCell>
                                 <TableCell>
                                   <Badge
                                     variant={
-                                      stat.pass_rate >= 0.7
+                                      stat.pass_rate >= 70
                                         ? "default"
-                                        : stat.pass_rate >= 0.4
+                                        : stat.pass_rate >= 40
                                         ? "secondary"
                                         : "destructive"
                                     }
                                   >
-                                    {(stat.pass_rate * 100).toFixed(0)}%
+                                    {stat.pass_rate}%
                                   </Badge>
                                 </TableCell>
-                                <TableCell>
-                                  {stat.avg_tests_passed.toFixed(1)}
-                                </TableCell>
+                                <TableCell>{stat.avg_score}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
@@ -494,7 +489,7 @@ export default function DashboardPage() {
                             <TableRow>
                               <TableHead>Skill</TableHead>
                               <TableHead>Questions</TableHead>
-                              <TableHead>Pass Rate</TableHead>
+                              <TableHead>Avg Score</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -507,14 +502,14 @@ export default function DashboardPage() {
                                 <TableCell>
                                   <Badge
                                     variant={
-                                      stat.pass_rate >= 0.7
+                                      stat.avg_score >= 70
                                         ? "default"
-                                        : stat.pass_rate >= 0.4
+                                        : stat.avg_score >= 40
                                         ? "secondary"
                                         : "destructive"
                                     }
                                   >
-                                    {(stat.pass_rate * 100).toFixed(0)}%
+                                    {stat.avg_score}%
                                   </Badge>
                                 </TableCell>
                               </TableRow>

@@ -223,6 +223,15 @@ export const api = {
   getDashboard: () => request<DashboardStats>("/dashboard"),
 
   getAnalytics: () => request<TeacherAnalytics>("/analytics"),
+  exportAnalyticsCSV: async () => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const res = await fetch(`${API_URL}/analytics/export.csv`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("Failed to export analytics CSV");
+    return res.blob();
+  },
 
   getClasses: () => request<SchoolClass[]>("/classes"),
   getClass: (id: number) => request<SchoolClass>(`/classes/${id}`),

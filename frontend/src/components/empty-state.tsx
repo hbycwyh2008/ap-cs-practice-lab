@@ -6,12 +6,14 @@ import { cn } from "@/lib/utils";
 interface EmptyStateProps {
   title: string;
   description?: string;
-  action?: {
+  action?:
+    | React.ReactNode
+    | {
     label: string;
     onClick?: () => void;
     href?: string;
   };
-  icon?: React.ReactNode;
+  icon?: React.ReactNode | React.ElementType;
   className?: string;
 }
 
@@ -22,25 +24,41 @@ export function EmptyState({
   icon,
   className,
 }: EmptyStateProps) {
+  const renderIcon = () => {
+    if (!icon) return null;
+    if (typeof icon === "function") {
+      const IconComponent = icon as React.ElementType;
+      return <IconComponent className="w-8 h-8" />;
+    }
+    return icon;
+  };
+
+  const renderAction = () => {
+    if (!action) return null;
+    if (React.isValidElement(action)) {
+      return action;
+    }
+    if (typeof action !== "object" || !("label" in action)) {
+      return null;
+    }
+    return (
+      <Button onClick={action.onClick} asChild={!!action.href}>
+        {action.href ? <a href={action.href}>{action.label}</a> : action.label}
+      </Button>
+    );
+  };
+
   return (
     <Card className={cn("border-dashed", className)}>
       <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-        {icon && <div className="mb-4 text-muted-foreground">{icon}</div>}
+        {icon && <div className="mb-4 text-muted-foreground">{renderIcon()}</div>}
         <h3 className="text-lg font-semibold mb-2">{title}</h3>
         {description && (
           <p className="text-sm text-muted-foreground mb-4 max-w-sm">
             {description}
           </p>
         )}
-        {action && (
-          <Button onClick={action.onClick} asChild={!!action.href}>
-            {action.href ? (
-              <a href={action.href}>{action.label}</a>
-            ) : (
-              action.label
-            )}
-          </Button>
-        )}
+        {action && renderAction()}
       </CardContent>
     </Card>
   );
