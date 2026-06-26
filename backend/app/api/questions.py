@@ -8,12 +8,16 @@ from app.models import (
     AssignmentQuestion,
     Course,
     Difficulty,
+    MultipleChoiceChoice,
     Question,
+    QuestionType,
     TestCase,
     User,
     UserRole,
 )
 from app.schemas import (
+    ImportedMCQBank,
+    ImportedMCQQuestion,
     ImportedQuestion,
     QuestionCreate,
     QuestionImportResponse,
@@ -86,6 +90,56 @@ def _validate_import_batch(data: list[ImportedQuestion]) -> list[dict]:
         raise HTTPException(status_code=400, detail=errors)
 
     return normalized
+
+
+def _validate_mcq_import_batch(data: ImportedMCQBank) -> list[dict]:
+    errors: list[str] = []
+    normalized: list[dict] = []
+
+    try:
+        course = _normalize_course(data.course)
+    except ValueError as exc:
+        errors.append(str(exc))
+        course = Course.AP_CSA
+
+    try:
+        difficulty = _normalize_difficulty(data.difficulty)
+    except ValueError as exc:
+        errors.append(str(exc))
+        difficulty = Difficulty.MEDIUM
+
+    for index, item in enumerate(data.questions):
+        label = f"question {index + 1}"
+        if item.type.strip().lower() != "multiple_choice":
+            errors.append(f"{label}: type must be multiple_choice")
+
+        choice_labels = [choice.label.strip().upper() for choice in item.choices]
+        if len(choice_labels) != len(set(choice_labels)):
+            errors.append(f"{label}: choice labels must be unique")
+
+        answer_label = item.answer.label.strip().upper()
+        if answer_label not in choice_labels:
+            errors.append(
+                f"{label}: answer.label must match one of the choice labels"
+            )
+
+        normalized.append(
+            {
+                "question": item,
+                "course": course,
+                "difficulty": difficulty,
+                "answer_label": answer_label,
+            }
+        )
+
+    if errors:
+        raise HTTPException(status_code=400, detail=errors)
+
+    return normalized
+
+
+def _mcq_title(bank_title: str, item: ImportedMCQQuestion) -> str:
+    return f"{bank_title.strip()} #{item.id}"
 
 
 def _student_assigned_question_ids(session: Session, user: User) -> set[int]:
@@ -185,6 +239,67 @@ def import_questions(
                     points=imported_case.points,
                 )
                 session.add(test_case)
+
+            created_questions.append(question)
+
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+
+    question_ids: list[int] = []
+    for question in created_questions:
+        session.refresh(question)
+        if question.id is not None:
+            question_ids.append(question.id)
+
+    return QuestionImportResponse(
+        imported_count=len(question_ids),
+        question_ids=question_ids,
+    )
+
+
+@router.post("/import-mcq", response_model=QuestionImportResponse)
+def import_multiple_choice_questions(
+    data: ImportedMCQBank,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_teacher),
+):
+    normalized_questions = _validate_mcq_import_batch(data)
+    created_questions: list[Question] = []
+
+    try:
+        for normalized in normalized_questions:
+            item: ImportedMCQQuestion = normalized["question"]
+            source = data.source or data.title
+            question = Question(
+                title=_mcq_title(data.title, item),
+                course=normalized["course"],
+                unit=data.unit.strip(),
+                topic=data.topic.strip(),
+                difficulty=normalized["difficulty"],
+                type=QuestionType.MULTIPLE_CHOICE,
+                prompt=item.prompt.strip(),
+                starter_code="",
+                reference_solution=None,
+                max_points=data.max_points,
+                skill=data.skill.strip(),
+                estimated_minutes=data.estimated_minutes,
+                source=source,
+                created_by=current_user.id,
+            )
+            session.add(question)
+            session.flush()
+
+            for choice in item.choices:
+                label = choice.label.strip().upper()
+                mcq_choice = MultipleChoiceChoice(
+                    question_id=question.id,
+                    label=label,
+                    text=choice.text.strip(),
+                    is_correct=label == normalized["answer_label"],
+                )
+                session.add(mcq_choice)
 
             created_questions.append(question)
 

@@ -33,6 +33,7 @@ export default function TeacherQuestionDetailPage() {
   if (loading) return <div className="p-8">Loading...</div>;
   if (!user || user.role !== "teacher") return <div className="p-8">Access denied</div>;
   if (!question) return <div className="p-8">Loading question...</div>;
+  const isMultipleChoice = question.type === "multiple_choice";
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -43,18 +44,38 @@ export default function TeacherQuestionDetailPage() {
         <section className="bg-white rounded-lg shadow p-6">
           <h2 className="font-semibold mb-3">Prompt</h2>
           <p className="whitespace-pre-wrap text-sm">{question.prompt}</p>
-          <h2 className="font-semibold mt-4 mb-3">Starter Code</h2>
-          <pre className="bg-gray-50 p-3 rounded text-sm font-mono overflow-x-auto">{question.starter_code}</pre>
+          {isMultipleChoice ? (
+            <>
+              <h2 className="font-semibold mt-4 mb-3">Choices</h2>
+              <div className="space-y-2">
+                {(question.choices || []).map((choice) => (
+                  <div key={choice.id} className="border rounded p-3 text-sm">
+                    <span className="font-semibold">{choice.label}.</span>{" "}
+                    {choice.text}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="font-semibold mt-4 mb-3">Starter Code</h2>
+              <pre className="bg-gray-50 p-3 rounded text-sm font-mono overflow-x-auto">{question.starter_code}</pre>
+            </>
+          )}
         </section>
 
         <section className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="font-semibold">Test Cases ({testCases.length})</h2>
-            <button onClick={() => setShowAddTC(!showAddTC)} className="text-sm text-blue-600 hover:underline">
-              + Add
-            </button>
+            <h2 className="font-semibold">
+              {isMultipleChoice ? "Answer Choices" : `Test Cases (${testCases.length})`}
+            </h2>
+            {!isMultipleChoice && (
+              <button onClick={() => setShowAddTC(!showAddTC)} className="text-sm text-blue-600 hover:underline">
+                + Add
+              </button>
+            )}
           </div>
-          {showAddTC && (
+          {!isMultipleChoice && showAddTC && (
             <div className="border rounded p-3 mb-3 space-y-2">
               <input placeholder="Name" value={tcForm.name} onChange={(e) => setTcForm({ ...tcForm, name: e.target.value })} className="w-full border rounded px-2 py-1 text-sm" />
               <input placeholder='Input JSON' value={tcForm.input_json} onChange={(e) => setTcForm({ ...tcForm, input_json: e.target.value })} className="w-full border rounded px-2 py-1 text-sm font-mono" />
@@ -67,17 +88,24 @@ export default function TeacherQuestionDetailPage() {
               <button onClick={addTestCase} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">Save</button>
             </div>
           )}
-          <div className="space-y-2">
-            {testCases.map((tc) => (
-              <div key={tc.id} className="border rounded p-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-medium">{tc.name}</span>
-                  <span>{tc.points} pts {tc.is_hidden && "(hidden)"}</span>
+          {isMultipleChoice ? (
+            <p className="text-sm text-gray-500">
+              Correct answers are stored server-side and are not shown to students.
+              Review the imported source JSON if you need to audit the answer key.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {testCases.map((tc) => (
+                <div key={tc.id} className="border rounded p-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-medium">{tc.name}</span>
+                    <span>{tc.points} pts {tc.is_hidden && "(hidden)"}</span>
+                  </div>
+                  <p className="text-gray-500 font-mono">in: {tc.input_json} → {tc.expected_output}</p>
                 </div>
-                <p className="text-gray-500 font-mono">in: {tc.input_json} → {tc.expected_output}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
 

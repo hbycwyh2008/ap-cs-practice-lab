@@ -9,7 +9,9 @@ from app.database import get_session
 from app.models import (
     Assignment,
     AssignmentQuestion,
+    MultipleChoiceChoice,
     Question,
+    QuestionType,
     Submission,
     SubmissionStatus,
     TestCase,
@@ -23,6 +25,7 @@ from app.schemas import (
     SubmissionRead,
     SubmissionRunRequest,
     SubmissionSubmitRequest,
+    TestResultItem,
 )
 from app.services.java_runner import determine_status, run_tests
 
@@ -97,6 +100,61 @@ def _submission_to_detail(
     )
 
 
+def _grade_multiple_choice(
+    session: Session,
+    question: Question,
+    selected_label: str,
+) -> FeedbackJson:
+    choices = session.exec(
+        select(MultipleChoiceChoice).where(
+            MultipleChoiceChoice.question_id == question.id
+        )
+    ).all()
+    if not choices:
+        raise HTTPException(
+            status_code=400,
+            detail="Multiple-choice question has no choices",
+        )
+
+    normalized_label = selected_label.strip().upper()
+    valid_labels = {choice.label.strip().upper() for choice in choices}
+    if normalized_label not in valid_labels:
+        raise HTTPException(
+            status_code=400,
+            detail="Selected answer must match one of the choices",
+        )
+
+    correct = next((choice for choice in choices if choice.is_correct), None)
+    if not correct:
+        raise HTTPException(
+            status_code=400,
+            detail="Multiple-choice question has no correct answer configured",
+        )
+
+    max_score = question.max_points or 1
+    is_correct = normalized_label == correct.label.strip().upper()
+    score = max_score if is_correct else 0
+    message = "Correct" if is_correct else "Submitted"
+
+    return FeedbackJson(
+        compiled=True,
+        total_tests=1,
+        passed_tests=1 if is_correct else 0,
+        score=score,
+        max_score=max_score,
+        tests=[
+            TestResultItem(
+                name="Selected answer",
+                hidden=False,
+                passed=is_correct,
+                points=score,
+                message=message,
+                expected_output=None,
+            )
+        ],
+    )
+
+
 @router.post("/run", response_model=RunResult)
 def run_submission(
     data: SubmissionRunRequest,
@@ -116,6 +174,12 @@ def run_submission(
             raise HTTPException(status_code=403, detail="Access denied")
 
     _ensure_question_in_assignment(session, data.assignment_id, data.question_id)
+
+    if question.type == QuestionType.MULTIPLE_CHOICE:
+        raise HTTPException(
+            status_code=400,
+            detail="Multiple-choice questions can be submitted directly.",
+        )
 
     # Always load ALL test cases so max_score reflects the full question.
     # run_tests only executes public tests when include_hidden=False.
@@ -181,6 +245,35 @@ def submit_final(
             raise HTTPException(status_code=403, detail="Access denied")
 
     _ensure_question_in_assignment(session, data.assignment_id, data.question_id)
+
+    if question.type == QuestionType.MULTIPLE_CHOICE:
+        feedback = _grade_multiple_choice(session, question, data.code)
+        status = (
+            SubmissionStatus.PASSED
+            if feedback.score == feedback.max_score
+            else SubmissionStatus.FAILED
+        )
+        submission = Submission(
+            student_id=current_user.id,
+            assignment_id=data.assignment_id,
+            question_id=data.question_id,
+            code=data.code.strip().upper(),
+            status=status,
+            score=feedback.score,
+            max_score=feedback.max_score,
+            feedback_json=feedback.model_dump_json(),
+            compile_output="",
+            runtime_output="",
+            is_final=True,
+        )
+        session.add(submission)
+        session.commit()
+        session.refresh(submission)
+        return _submission_to_detail(
+            session,
+            submission,
+            show_hidden_details=current_user.role == UserRole.TEACHER,
+        )
 
     test_cases = session.exec(
         select(TestCase).where(TestCase.question_id == data.question_id)

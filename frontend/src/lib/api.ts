@@ -34,6 +34,14 @@ export interface Question {
   is_active: boolean;
   created_by: number;
   created_at: string;
+  choices?: MultipleChoiceChoice[];
+}
+
+export interface MultipleChoiceChoice {
+  id: number;
+  question_id: number;
+  label: string;
+  text: string;
 }
 
 export interface TestCase {
@@ -74,6 +82,38 @@ export interface ImportedQuestion {
 export interface QuestionImportResponse {
   imported_count: number;
   question_ids: number[];
+}
+
+export interface ImportedMCQChoice {
+  label: string;
+  text: string;
+}
+
+export interface ImportedMCQQuestion {
+  id: number | string;
+  section?: string;
+  type: string;
+  prompt: string;
+  choices: ImportedMCQChoice[];
+  answer: {
+    label: string;
+    text?: string;
+  };
+}
+
+export interface ImportedMCQBank {
+  title: string;
+  section?: string;
+  question_count?: number;
+  questions: ImportedMCQQuestion[];
+  course?: string;
+  unit?: string;
+  topic?: string;
+  skill?: string;
+  difficulty?: string;
+  estimated_minutes?: number;
+  source?: string;
+  max_points?: number;
 }
 
 export interface SchoolClass {
@@ -284,6 +324,11 @@ export const api = {
     }),
   importQuestions: (data: ImportedQuestion[]) =>
     request<QuestionImportResponse>("/questions/import", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  importMultipleChoiceQuestions: (data: ImportedMCQBank) =>
+    request<QuestionImportResponse>("/questions/import-mcq", {
       method: "POST",
       body: JSON.stringify(data),
     }),

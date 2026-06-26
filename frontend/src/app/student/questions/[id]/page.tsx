@@ -42,6 +42,7 @@ function QuestionSolver() {
   const [message, setMessage] = useState("");
   const [latestStatus, setLatestStatus] = useState("");
   const [activeTab, setActiveTab] = useState<string>("problem");
+  const [selectedChoice, setSelectedChoice] = useState("");
 
   useEffect(() => {
     if (id && user) {
@@ -50,6 +51,7 @@ function QuestionSolver() {
         .then((q) => {
           setQuestion(q);
           setCode(q.starter_code);
+          setSelectedChoice("");
         })
         .catch(console.error);
     }
@@ -96,10 +98,16 @@ function QuestionSolver() {
     setFeedback(null);
     setLatestStatus("");
     try {
+      const submittedCode =
+        question?.type === "multiple_choice" ? selectedChoice : code;
+      if (question?.type === "multiple_choice" && !submittedCode) {
+        setMessage("Select an answer before submitting.");
+        return;
+      }
       const result = await api.submitCode({
         question_id: Number(id),
         assignment_id: assignmentId,
-        code,
+        code: submittedCode,
       });
       if (result.feedback) {
         setFeedback(result.feedback);
@@ -145,6 +153,139 @@ function QuestionSolver() {
         <p className="text-muted-foreground">Loading question...</p>
       </div>
     );
+
+  if (question.type === "multiple_choice") {
+    return (
+      <div className="container max-w-5xl mx-auto p-6 space-y-6">
+        <div className="space-y-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/student/assignments/${assignmentId}`}>← Back</Link>
+          </Button>
+          <h1 className="text-3xl font-bold">{question.title}</h1>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Badge variant="outline">{question.unit}</Badge>
+            <span>·</span>
+            <span>{question.topic}</span>
+            <span>·</span>
+            <Badge>{question.max_points} points</Badge>
+          </div>
+        </div>
+
+        <Alert className="bg-blue-50 border-blue-200">
+          <AlertDescription className="text-sm">
+            Select one answer and submit when ready. The correct answer is not
+            shown before submission.
+          </AlertDescription>
+        </Alert>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Question</CardTitle>
+              <CardDescription>
+                Read the prompt and choose one answer
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                {question.prompt}
+              </p>
+              <Separator />
+              <div className="space-y-3">
+                {(question.choices || []).map((choice) => (
+                  <label
+                    key={choice.id}
+                    className={`block rounded-lg border-2 p-4 cursor-pointer transition ${
+                      selectedChoice === choice.label
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-slate-200 bg-white hover:border-blue-200"
+                    }`}
+                  >
+                    <div className="flex gap-3">
+                      <input
+                        type="radio"
+                        name="choice"
+                        value={choice.label}
+                        checked={selectedChoice === choice.label}
+                        onChange={() => setSelectedChoice(choice.label)}
+                        className="mt-1"
+                      />
+                      <div>
+                        <div className="font-semibold">{choice.label}</div>
+                        <div className="text-sm text-slate-700">
+                          {choice.text}
+                        </div>
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting || !selectedChoice}
+                className="w-full"
+              >
+                {submitting ? "Submitting..." : "Submit Final Answer"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4">
+            {message && (
+              <Alert
+                className={
+                  feedback?.score === feedback?.max_score
+                    ? "border-green-200 bg-green-50"
+                    : "border-blue-200 bg-blue-50"
+                }
+              >
+                <AlertDescription className="font-medium">
+                  {message}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {feedback ? (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Result</CardTitle>
+                      <CardDescription>
+                        Score: {feedback.score}/{feedback.max_score}
+                      </CardDescription>
+                    </div>
+                    <StatusBadge
+                      status={
+                        feedback.score === feedback.max_score
+                          ? "passed"
+                          : "failed"
+                      }
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Your selected answer was submitted. Ask your teacher if you
+                    want to review the correct answer after practice.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-dashed">
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <p>No submission yet</p>
+                  <p className="text-sm mt-2">
+                    Choose one answer and submit to see your score.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-7xl mx-auto p-6 space-y-6">

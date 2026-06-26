@@ -84,7 +84,13 @@ export default function TeacherQuestionsPage() {
               <Button variant="outline" asChild>
                 <Link href="/teacher/questions/import">
                   <Upload className="w-4 h-4 mr-2" />
-                  Import Questions
+                  Import FRQ Questions
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/teacher/questions/import-mcq">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import MCQ Questions
                 </Link>
               </Button>
               <Button asChild>

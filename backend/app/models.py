@@ -17,7 +17,7 @@ class Course(str, Enum):
 
 class QuestionType(str, Enum):
     FRQ_CODE = "FRQ_CODE"
-    # Reserved: MCQ = "MCQ"
+    MULTIPLE_CHOICE = "multiple_choice"
 
 
 class Difficulty(str, Enum):
@@ -89,6 +89,20 @@ class Question(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     test_cases: list["TestCase"] = Relationship(back_populates="question")
+    choices: list["MultipleChoiceChoice"] = Relationship(back_populates="question")
+
+
+class MultipleChoiceChoice(SQLModel, table=True):
+    __tablename__ = "multiple_choice_choices"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    question_id: int = Field(foreign_key="questions.id")
+    label: str
+    text: str
+    is_correct: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    question: Optional[Question] = Relationship(back_populates="choices")
 
 
 class TestCase(SQLModel, table=True):

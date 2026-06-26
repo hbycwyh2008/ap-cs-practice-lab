@@ -115,6 +115,16 @@ class QuestionUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
+class MultipleChoiceChoiceRead(BaseModel):
+    id: int
+    question_id: int
+    label: str
+    text: str
+
+    class Config:
+        from_attributes = True
+
+
 class QuestionRead(BaseModel):
     id: int
     title: str
@@ -133,6 +143,7 @@ class QuestionRead(BaseModel):
     is_active: bool
     created_by: int
     created_at: datetime
+    choices: list[MultipleChoiceChoiceRead] = []
 
     class Config:
         from_attributes = True
@@ -251,6 +262,93 @@ class ImportedQuestion(BaseModel):
 class QuestionImportResponse(BaseModel):
     imported_count: int
     question_ids: list[int]
+
+
+class ImportedMCQChoice(BaseModel):
+    label: str
+    text: str
+
+    @field_validator("label", "text")
+    @classmethod
+    def required_text(cls, value: str) -> str:
+        if not value or not value.strip():
+            raise ValueError("field is required")
+        return value
+
+
+class ImportedMCQAnswer(BaseModel):
+    label: str
+    text: Optional[str] = None
+
+    @field_validator("label")
+    @classmethod
+    def required_label(cls, value: str) -> str:
+        if not value or not value.strip():
+            raise ValueError("answer label is required")
+        return value
+
+
+class ImportedMCQQuestion(BaseModel):
+    id: int | str
+    section: Optional[str] = None
+    type: str
+    prompt: str
+    choices: list[ImportedMCQChoice]
+    answer: ImportedMCQAnswer
+
+    @field_validator("prompt", "type")
+    @classmethod
+    def required_text(cls, value: str) -> str:
+        if not value or not value.strip():
+            raise ValueError("field is required")
+        return value
+
+    @field_validator("choices")
+    @classmethod
+    def require_choices(
+        cls, value: list[ImportedMCQChoice]
+    ) -> list[ImportedMCQChoice]:
+        if len(value) < 2:
+            raise ValueError("at least two choices are required")
+        return value
+
+
+class ImportedMCQBank(BaseModel):
+    title: str
+    section: Optional[str] = None
+    question_count: Optional[int] = None
+    questions: list[ImportedMCQQuestion]
+    course: str = "AP_CSA"
+    unit: str = "Multiple Choice"
+    topic: str = "Multiple Choice"
+    skill: str = "AP CSA multiple choice"
+    difficulty: str = "medium"
+    estimated_minutes: int = 2
+    source: Optional[str] = None
+    max_points: int = 1
+
+    @field_validator("title")
+    @classmethod
+    def required_title(cls, value: str) -> str:
+        if not value or not value.strip():
+            raise ValueError("title is required")
+        return value
+
+    @field_validator("questions")
+    @classmethod
+    def require_questions(
+        cls, value: list[ImportedMCQQuestion]
+    ) -> list[ImportedMCQQuestion]:
+        if not value:
+            raise ValueError("questions array is required")
+        return value
+
+    @field_validator("estimated_minutes", "max_points")
+    @classmethod
+    def positive_number(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("value must be positive")
+        return value
 
 
 # Assignments
