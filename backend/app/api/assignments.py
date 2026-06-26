@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+import random
 from sqlmodel import Session, select
 
 from app.auth import get_current_user, require_teacher
@@ -7,6 +8,7 @@ from app.models import (
     Assignment,
     AssignmentQuestion,
     Question,
+    QuestionType,
     SchoolClass,
     User,
     UserRole,
@@ -14,6 +16,7 @@ from app.models import (
 from app.schemas import (
     AssignmentCreate,
     AssignmentDetail,
+    AssignmentGenerateRequest,
     AssignmentQuestionRead,
     AssignmentRead,
     AssignmentUpdate,
@@ -99,6 +102,83 @@ def create_assignment(
             question_id=q.question_id,
             order=q.order,
             points=q.points,
+        )
+        session.add(aq)
+    session.commit()
+
+    return _build_assignment_detail(session, assignment)
+
+
+@router.post("/generate", response_model=AssignmentDetail)
+def generate_assignment(
+    data: AssignmentGenerateRequest,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(require_teacher),
+):
+    school_class = session.get(SchoolClass, data.class_id)
+    if not school_class:
+        raise HTTPException(status_code=404, detail="Class not found")
+    if school_class.teacher_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    stmt = select(Question).where(
+        Question.created_by == current_user.id,
+        Question.is_active == True,
+        Question.course == data.course,
+        Question.type == QuestionType.FRQ_CODE,
+    )
+    if data.units:
+        stmt = stmt.where(Question.unit.in_(data.units))
+    if data.difficulties:
+        stmt = stmt.where(Question.difficulty.in_(data.difficulties))
+    if data.skills:
+        stmt = stmt.where(Question.skill.in_(data.skills))
+
+    candidates = list(session.exec(stmt).all())
+
+    if not data.include_recent_questions:
+        teacher_assignments = session.exec(
+            select(Assignment).where(Assignment.created_by == current_user.id)
+        ).all()
+        assignment_ids = [a.id for a in teacher_assignments]
+        if assignment_ids:
+            used_rows = session.exec(
+                select(AssignmentQuestion).where(
+                    AssignmentQuestion.assignment_id.in_(assignment_ids)
+                )
+            ).all()
+            used_ids = {row.question_id for row in used_rows}
+            candidates = [q for q in candidates if q.id not in used_ids]
+
+    random.shuffle(candidates)
+    selected = candidates[: data.question_count]
+    selected_count = len(selected)
+
+    description = data.description
+    note = (
+        f"[Auto-generated: selected {selected_count} of "
+        f"{data.question_count} requested question(s).]"
+    )
+    description = f"{description}\n\n{note}".strip() if description else note
+
+    assignment = Assignment(
+        title=data.title,
+        description=description,
+        class_id=data.class_id,
+        created_by=current_user.id,
+        due_at=data.due_at,
+    )
+    session.add(assignment)
+    session.commit()
+    session.refresh(assignment)
+
+    for i, q in enumerate(selected):
+        points = q.max_points if q.max_points > 0 else 10
+        aq = AssignmentQuestion(
+            assignment_id=assignment.id,
+            question_id=q.id,
+            order=i + 1,
+            points=points,
         )
         session.add(aq)
     session.commit()

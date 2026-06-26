@@ -76,6 +76,10 @@ class QuestionCreate(BaseModel):
     starter_code: str
     reference_solution: Optional[str] = None
     max_points: int = 0
+    skill: Optional[str] = "traversal"
+    estimated_minutes: int = 10
+    source: Optional[str] = "teacher-created"
+    is_active: bool = True
 
 
 class QuestionUpdate(BaseModel):
@@ -87,6 +91,10 @@ class QuestionUpdate(BaseModel):
     starter_code: Optional[str] = None
     reference_solution: Optional[str] = None
     max_points: Optional[int] = None
+    skill: Optional[str] = None
+    estimated_minutes: Optional[int] = None
+    source: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
 class QuestionRead(BaseModel):
@@ -101,6 +109,10 @@ class QuestionRead(BaseModel):
     starter_code: str
     reference_solution: Optional[str]
     max_points: int
+    skill: Optional[str]
+    estimated_minutes: int
+    source: Optional[str]
+    is_active: bool
     created_by: int
     created_at: datetime
 
@@ -201,6 +213,19 @@ class AssignmentRead(BaseModel):
 
 class AssignmentDetail(AssignmentRead):
     questions: list[AssignmentQuestionRead] = []
+
+
+class AssignmentGenerateRequest(BaseModel):
+    title: str
+    description: str = ""
+    class_id: int
+    due_at: Optional[datetime] = None
+    course: Course = Course.AP_CSA
+    units: list[str] = []
+    difficulties: list[Difficulty] = []
+    skills: list[str] = []
+    question_count: int
+    include_recent_questions: bool = True
 
 
 # Submissions

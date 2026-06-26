@@ -11,6 +11,7 @@ Regression checks:
   - public run scores 4/10 (public tests only, full max_score)
   - student test-cases omit hidden tests and expected_output
   - student cannot submit a question outside the assignment (403)
+  - teacher can auto-generate assignment from question tags
 
 Usage:
     python scripts/smoke_test.py
@@ -149,6 +150,50 @@ def test_unassigned_question_forbidden(
     print(f"  [ok] submit blocked for orphan question id={orphan_id}")
 
 
+def test_auto_generate(teacher_token, student_token):
+    print("10. Regression: teacher auto-generates assignment")
+    status, classes = _request("GET", "/classes", token=teacher_token)
+    assert status == 200 and classes, f"GET /classes failed: {status} {classes}"
+    class_id = classes[0]["id"]
+
+    status, generated = _request(
+        "POST",
+        "/assignments/generate",
+        token=teacher_token,
+        body={
+            "title": "Smoke Test Auto Assignment",
+            "description": "Auto-generated for smoke test.",
+            "class_id": class_id,
+            "course": "AP_CSA",
+            "units": ["Array"],
+            "difficulties": ["easy"],
+            "skills": ["traversal"],
+            "question_count": 2,
+            "include_recent_questions": True,
+        },
+    )
+    assert status == 200, f"POST /assignments/generate failed: {status} {generated}"
+    q_count = len(generated.get("questions", []))
+    assert q_count >= 1, f"Expected at least 1 question, got {q_count}"
+    assert q_count == 2, f"Expected 2 questions, got {q_count}"
+    print(f"  [ok] generated assignment id={generated['id']} with {q_count} question(s)")
+
+    status, student_assignments = _request("GET", "/assignments", token=student_token)
+    assert status == 200, f"Student GET /assignments failed: {status}"
+    titles = {a["title"] for a in student_assignments}
+    assert "Smoke Test Auto Assignment" in titles, (
+        f"Student cannot see auto-generated assignment; titles={titles}"
+    )
+    print("  [ok] student sees auto-generated assignment")
+
+
+def _find_seed_assignment(assignments):
+    for a in assignments:
+        if a.get("title") == "Array Traversal Practice":
+            return a
+    return assignments[0]
+
+
 def main():
     print(f"Running smoke test against {BASE_URL}")
 
@@ -162,8 +207,9 @@ def main():
     status, assignments = _request("GET", "/assignments", token=student_token)
     assert status == 200, f"GET /assignments failed: {status} {assignments}"
     assert assignments, "Student has no assignments (did you run seed.py?)"
-    assignment_id = assignments[0]["id"]
-    print(f"  [ok] found assignment id={assignment_id}")
+    assignment = _find_seed_assignment(assignments)
+    assignment_id = assignment["id"]
+    print(f"  [ok] found assignment id={assignment_id} ({assignment['title']})")
 
     print("4. Student fetches assignment detail")
     status, detail = _request(
@@ -209,6 +255,8 @@ def main():
     print(f"  [ok] teacher sees submission id={submission_id}")
 
     test_unassigned_question_forbidden(teacher_token, student_token, assignment_id)
+
+    test_auto_generate(teacher_token, student_token)
 
     print("\nSMOKE TEST PASSED")
 

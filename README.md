@@ -71,7 +71,7 @@ Open **http://localhost:3000** in your browser.
 
 Seed data includes:
 - Class: **AP CSA Period 1** (2026-2027)
-- Question: **Find Maximum Value** (Array unit, 4 test cases, 10 points)
+- **6** sample questions (Array unit, various skills/difficulties)
 - Assignment: **Array Traversal Practice**
 
 ## Testing the First FRQ Auto-Grading
@@ -186,6 +186,80 @@ into the Java runner container, and deletes it afterward. This replaces the
 earlier named-volume approach, which the Docker daemon could not resolve to a
 host path.
 
+## Database Reset (Development)
+
+This MVP does **not** use Alembic migrations. When model fields change, reset
+the local database:
+
+```bash
+docker compose down -v
+docker compose up --build -d
+docker compose exec backend python seed.py
+```
+
+Production deployments should add Alembic in a future milestone.
+
+## Milestone 2: Auto-Generated Assignments
+
+Teachers can auto-generate AP CSA assignments from the question bank using tags:
+
+- **unit** — e.g. Array, ArrayList, 2D Array
+- **difficulty** — easy, medium, hard
+- **skill** — e.g. traversal, selection
+- **question_count** — how many questions to include
+- **include_recent_questions** — whether to allow questions already used in prior assignments
+
+### Question tags
+
+Each question now includes:
+
+| Field | Example |
+|-------|---------|
+| `skill` | traversal, selection |
+| `estimated_minutes` | 10 |
+| `source` | original, teacher-created |
+| `is_active` | true / false |
+
+### Auto-generate API
+
+```http
+POST /assignments/generate
+```
+
+Example body:
+
+```json
+{
+  "title": "Array Traversal Auto Practice",
+  "description": "Auto-generated AP CSA array traversal practice.",
+  "class_id": 1,
+  "units": ["Array"],
+  "difficulties": ["easy"],
+  "skills": ["traversal"],
+  "question_count": 3,
+  "include_recent_questions": true
+}
+```
+
+### How to test auto-generate
+
+1. Log in as `teacher@example.com`
+2. Go to **Assignments → New Assignment → Auto-generate**
+3. Fill in unit, difficulty, skill, and question count
+4. Click **Generate Assignment**
+5. Log in as `student@example.com` and confirm the new assignment appears
+
+Or run the full regression suite:
+
+```bash
+docker compose down -v
+docker compose up --build -d
+docker compose exec backend python seed.py
+python scripts/smoke_test.py
+```
+
+Current scope: **AP_CSA** / **FRQ_CODE** / `public int solve(int[] nums)` only.
+
 ## Current MVP Limitations
 
 - Only supports `public int solve(int[] nums)` method signature
@@ -212,7 +286,9 @@ host path.
 - [x] Submission history for teachers and students
 - [x] Teacher dashboard with filters
 - [x] Student dashboard with average score
-- [x] Seed data script
+- [x] Seed data script (6 sample AP CSA questions)
+- [x] Question tags (skill, estimated_minutes, source, is_active)
+- [x] Auto-generated assignments from unit / difficulty / skill filters
 
 ## Reserved for Future Development
 
@@ -225,8 +301,11 @@ Code structure includes extension points for:
 - [ ] AP CSP MCQ support
 - [ ] AP CSP Create Task checklist
 - [ ] Wrong-answer notebook
-- [ ] Auto-generated problem sets
+- [ ] Smarter auto-grouping (difficulty distribution, topic balancing)
 - [ ] Knowledge mastery analytics
+
+Auto-generate does not yet support difficulty **distribution** (only filter by
+difficulty list). AP CSP, AI scoring, and rubric scoring remain out of scope.
 
 See `backend/app/services/java_runner.py` and `backend/app/models.py` for enum placeholders (`Course.AP_CSP`, `QuestionType.MCQ`).
 

@@ -20,6 +20,10 @@ export default function NewQuestionPage() {
     unit: "Array",
     topic: "",
     difficulty: "easy",
+    skill: "traversal",
+    estimated_minutes: 10,
+    source: "teacher-created",
+    is_active: true,
     prompt: "",
     starter_code: DEFAULT_STARTER,
   });
@@ -52,18 +56,43 @@ export default function NewQuestionPage() {
           <Field label="Unit" value={form.unit} onChange={(v) => setForm({ ...form, unit: v })} required />
           <Field label="Topic" value={form.topic} onChange={(v) => setForm({ ...form, topic: v })} required />
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Difficulty</label>
-          <select
-            value={form.difficulty}
-            onChange={(e) => setForm({ ...form, difficulty: e.target.value })}
-            className="w-full border rounded-md px-3 py-2"
-          >
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-          </select>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Difficulty</label>
+            <select
+              value={form.difficulty}
+              onChange={(e) => setForm({ ...form, difficulty: e.target.value })}
+              className="w-full border rounded-md px-3 py-2"
+            >
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <Field label="Skill" value={form.skill} onChange={(v) => setForm({ ...form, skill: v })} required />
         </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Estimated Minutes</label>
+            <input
+              type="number"
+              min={1}
+              value={form.estimated_minutes}
+              onChange={(e) => setForm({ ...form, estimated_minutes: Number(e.target.value) })}
+              className="w-full border rounded-md px-3 py-2"
+              required
+            />
+          </div>
+          <Field label="Source" value={form.source} onChange={(v) => setForm({ ...form, source: v })} />
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={form.is_active}
+            onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+          />
+          Active (available for auto-generated assignments)
+        </label>
         <div>
           <label className="block text-sm font-medium mb-1">Prompt</label>
           <textarea

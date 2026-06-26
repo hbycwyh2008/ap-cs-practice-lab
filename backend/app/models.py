@@ -81,6 +81,10 @@ class Question(SQLModel, table=True):
     starter_code: str
     reference_solution: Optional[str] = None
     max_points: int = 0
+    skill: Optional[str] = None
+    estimated_minutes: int = 10
+    source: Optional[str] = None
+    is_active: bool = True
     created_by: int = Field(foreign_key="users.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 

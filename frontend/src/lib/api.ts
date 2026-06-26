@@ -28,6 +28,10 @@ export interface Question {
   starter_code: string;
   reference_solution: string | null;
   max_points: number;
+  skill: string | null;
+  estimated_minutes: number;
+  source: string | null;
+  is_active: boolean;
   created_by: number;
   created_at: string;
 }
@@ -208,6 +212,23 @@ export const api = {
     questions: { question_id: number; order: number; points: number }[];
   }) =>
     request<AssignmentDetail>("/assignments", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  generateAssignment: (data: {
+    title: string;
+    description: string;
+    class_id: number;
+    due_at?: string;
+    course?: string;
+    units?: string[];
+    difficulties?: string[];
+    skills?: string[];
+    question_count: number;
+    include_recent_questions?: boolean;
+  }) =>
+    request<AssignmentDetail>("/assignments/generate", {
       method: "POST",
       body: JSON.stringify(data),
     }),
