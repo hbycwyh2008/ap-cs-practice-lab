@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, Assignment } from "@/lib/api";
@@ -29,18 +29,30 @@ export default function StudentAssignmentsPage() {
   const router = useRouter();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  const loadAssignments = useCallback(async () => {
+    setLoadingData(true);
+    setLoadError("");
+    try {
+      const data = await api.getAssignments();
+      setAssignments(data);
+    } catch (error) {
+      console.error("Failed to load assignments:", error);
+      setLoadError("Unable to load assignments right now. Please try again.");
+    } finally {
+      setLoadingData(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && (!user || user.role !== "student")) {
       router.push("/dashboard");
     }
     if (user && user.role === "student") {
-      api
-        .getAssignments()
-        .then(setAssignments)
-        .finally(() => setLoadingData(false));
+      loadAssignments();
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, loadAssignments]);
 
   if (loading || loadingData) {
     return (
@@ -55,10 +67,24 @@ export default function StudentAssignmentsPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           <PageHeader
             title="My Assignments"
-            description="Practice AP CSA Free Response Questions"
+            description="Open assignments and start AP CSA practice"
           />
 
-          {assignments.length === 0 ? (
+          {loadError ? (
+            <EmptyState
+              icon={<AlertCircle className="w-8 h-8" />}
+              title="Couldn't load assignments"
+              description={loadError}
+              action={
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button onClick={loadAssignments}>Retry</Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/dashboard">Back to Dashboard</Link>
+                  </Button>
+                </div>
+              }
+            />
+          ) : assignments.length === 0 ? (
             <EmptyState
               icon={<FileCheck className="w-8 h-8" />}
               title="No assignments yet"
@@ -92,7 +118,7 @@ export default function StudentAssignmentsPage() {
                     </CardHeader>
                     <CardContent className="pt-6">
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-6">
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-6">
                           <div className="flex items-center gap-2">
                             {isOverdue ? (
                               <AlertCircle className="w-5 h-5 text-red-600" />
@@ -100,7 +126,9 @@ export default function StudentAssignmentsPage() {
                               <Clock className="w-5 h-5 text-amber-600" />
                             )}
                             <span className="text-lg font-semibold text-slate-700">
-                              {a.due_at ? "Due date set" : "No due date"}
+                              {a.due_at
+                                ? `Due ${new Date(a.due_at).toLocaleDateString()}`
+                                : "No due date"}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-slate-700">
@@ -113,7 +141,7 @@ export default function StudentAssignmentsPage() {
                             variant={isOverdue ? "destructive" : "secondary"}
                             className="text-sm"
                           >
-                            Due {a.due_at ? new Date(a.due_at).toLocaleDateString() : "No due date"}
+                            {isOverdue ? "Overdue" : "Upcoming"}
                           </Badge>
                         </div>
                         <Button asChild className="w-full sm:w-auto group">
