@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Assignments V3 Style Exploration</title>
+  <style>
+    :root {
+      --bg: #f3f7fc;
+      --surface: #ffffff;
+      --border: #d9e3f2;
+      --text: #0f172a;
+      --muted: #475569;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #15803d;
+      --warning: #b45309;
+      --error: #dc2626;
+      --radius: 14px;
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+      --space-1: 8px;
+      --space-2: 12px;
+      --space-3: 16px;
+      --space-4: 24px;
+      --space-5: 32px;
+      --space-6: 40px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #eef4fb 0%, #f8fbff 100%);
+      line-height: 1.45;
+    }
+    .page {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: var(--space-6) var(--space-5) 80px;
+    }
+    h1 { margin: 0 0 var(--space-2); font-size: 32px; }
+    p.lead { margin: 0 0 var(--space-5); color: var(--muted); max-width: 960px; }
+    .option {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid #e3ecf8;
+      border-radius: 18px;
+      padding: var(--space-5);
+      margin-bottom: 48px;
+      backdrop-filter: blur(2px);
+    }
+    .option h2 { margin: 0 0 var(--space-1); font-size: 28px; }
+    .option .intent { margin: 0 0 var(--space-4); color: var(--muted); }
+    .viewport-grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: var(--space-5);
+      align-items: start;
+    }
+    .mockup-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+      margin: 0 0 10px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .desktop-frame {
+      width: 100%;
+      min-height: 860px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      box-shadow: var(--shadow);
+      padding: 34px;
+      overflow: hidden;
+    }
+    .mobile-frame {
+      width: 390px;
+      min-height: 844px;
+      border-radius: 24px;
+      border: 1px solid #c8d7ee;
+      background: var(--bg);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      overflow: hidden;
+    }
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+    .title {
+      margin: 0;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    .intro {
+      background: #e9f2ff;
+      border: 1px solid #c8dbfa;
+      border-radius: var(--radius);
+      padding: var(--space-3) var(--space-4);
+      margin-bottom: var(--space-4);
+      color: #1e3a8a;
+      font-size: 15px;
+    }
+    .assignment-list { display: grid; gap: var(--space-3); }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 5px 14px rgba(15, 23, 42, 0.06);
+      padding: var(--space-4);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--space-3);
+      align-items: center;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 22px; }
+    .desc { margin: 0 0 12px; color: var(--muted); font-size: 15px; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .chip.type-mcq { background: #eaf2ff; color: #1e40af; border-color: #c6d9fb; }
+    .chip.type-frq { background: #e8f8ef; color: #166534; border-color: #bbefcf; }
+    .chip.type-mixed { background: #fff4e5; color: #92400e; border-color: #f6ddb9; }
+    .chip.status-upcoming { background: #eff6ff; color: #1d4ed8; border-color: #c8dbfa; }
+    .chip.status-overdue { background: #feecec; color: #b91c1c; border-color: #f8caca; }
+    .meta-text { font-size: 13px; color: #334155; font-weight: 600; }
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 12px 18px;
+      cursor: default;
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 6px 12px rgba(37, 99, 235, 0.22);
+      min-width: 168px;
+      text-align: center;
+    }
+    .mobile .card {
+      grid-template-columns: 1fr;
+      padding: 18px;
+      gap: 12px;
+    }
+    .mobile .title { font-size: 26px; }
+    .mobile .subtitle { font-size: 14px; }
+    .mobile .btn {
+      width: 100%;
+      min-width: 0;
+    }
+
+    /* Option B specific */
+    .option-b .desktop-frame { background: #f5f9ff; }
+    .option-b .header-panel {
+      background: linear-gradient(135deg, #1e40af 0%, #2563eb 75%);
+      color: #fff;
+      border-radius: 16px;
+      padding: 22px 24px;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+    .option-b .header-panel h3 { margin: 0; font-size: 24px; }
+    .option-b .header-panel p { margin: 8px 0 0; color: rgba(255,255,255,0.9); }
+    .option-b .summary-box {
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 13px;
+    }
+    .option-b .card { border-left: 6px solid #bfdbfe; }
+    .option-b .card.overdue { border-left-color: #fecaca; }
+    .option-b .icon-badge {
+      width: 42px; height: 42px; border-radius: 12px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #eff6ff; color: #1e40af; font-size: 18px; margin-right: 10px;
+      border: 1px solid #dbeafe;
+    }
+
+    /* Option C specific */
+    .option-c .desktop-frame { background: #f7fbff; }
+    .option-c .intro {
+      background: #ffffff;
+      border-style: dashed;
+      border-width: 2px;
+      color: #0f172a;
+    }
+    .option-c .card h3 { font-size: 26px; }
+    .option-c .btn { font-size: 16px; padding: 14px 18px; min-width: 196px; }
+    .option-c .workflow {
+      font-size: 14px;
+      color: #0f172a;
+      margin-bottom: 16px;
+      background: #fefce8;
+      border: 1px solid #fde68a;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-weight: 600;
+    }
+    .note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #64748b;
+    }
+    @media (max-width: 1400px) {
+      .viewport-grid { grid-template-columns: 1fr; }
+      .mobile-frame { width: 100%; max-width: 390px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>Student Assignments V3 Visual Direction Exploration</h1>
+    <p class="lead">
+      Design-only exploration for route <code>/student/assignments</code>. This file is standalone HTML and does not use production frontend code, backend APIs, or Next.js runtime.
+      It intentionally shows 3 style directions with desktop + mobile states using sample classroom data.
+    </p>
+
+    <!-- Option A -->
+    <section class="option option-a">
+      <h2>Option A · Calm Academic SaaS</h2>
+      <p class="intent">Clean, professional, classroom-friendly, calm and trustworthy with soft hierarchy and obvious actions.</p>
+      <div class="viewport-grid">
+        <div>
+          <p class="mockup-title">Desktop · 1440 x 1024</p>
+          <div class="desktop-frame">
+            <div class="top-row">
+              <div>
+                <h3 class="title">My Assignments</h3>
+                <p class="subtitle">Practice AP CSA assignments with clear next steps.</p>
+              </div>
+            </div>
+            <div class="intro">Start with your upcoming assignment first. Click <strong>Start Practice</strong> on any card to continue.</div>
+            <div class="assignment-list">
+              <article class="card">
+                <div>
+                  <h3>Unit 2 MCQ Practice</h3>
+                  <p class="desc">Loop tracing and condition checks for warm-up practice.</p>
+                  <div class="meta">
+                    <span class="meta-text">Due Jul 03, 2026</span>
+                    <span class="meta-text">Questions 10</span>
+                    <span class="chip type-mcq">MCQ</span>
+                    <span class="chip status-upcoming">Upcoming</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+              <article class="card">
+                <div>
+                  <h3>Array FRQ Drill</h3>
+                  <p class="desc">Practice traversal, aggregation, and return values.</p>
+                  <div class="meta">
+                    <span class="meta-text">No due date</span>
+                    <span class="meta-text">Questions 3</span>
+                    <span class="chip type-frq">FRQ</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+              <article class="card">
+                <div>
+                  <h3>Mixed Practice Set A</h3>
+                  <p class="desc">Review day set with MCQ and FRQ items.</p>
+                  <div class="meta">
+                    <span class="meta-text" style="color:#b91c1c;">Due Yesterday</span>
+                    <span class="meta-text">Questions 6</span>
+                    <span class="chip type-mixed">Mixed</span>
+                    <span class="chip status-overdue">Overdue</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p class="mockup-title">Mobile · 390 x 844</p>
+          <div class="mobile-frame mobile">
+            <h3 class="title">My Assignments</h3>
+            <p class="subtitle">Pick one and start now.</p>
+            <div class="assignment-list">
+              <article class="card">
+                <div>
+                  <h3 style="font-size:20px;">Unit 2 MCQ Practice</h3>
+                  <p class="desc">Loop tracing and condition checks for warm-up practice.</p>
+                  <div class="meta">
+                    <span class="meta-text">Due Jul 03, 2026</span>
+                    <span class="meta-text">Questions 10</span>
+                    <span class="chip type-mcq">MCQ</span>
+                    <span class="chip status-upcoming">Upcoming</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+              <article class="card">
+                <div>
+                  <h3 style="font-size:20px;">Array FRQ Drill</h3>
+                  <p class="desc">Practice traversal, aggregation, and return values.</p>
+                  <div class="meta">
+                    <span class="meta-text">No due date</span>
+                    <span class="meta-text">Questions 3</span>
+                    <span class="chip type-frq">FRQ</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="note">No fake progress, no timer, no answer data, no teacher controls.</p>
+    </section>
+
+    <!-- Option B -->
+    <section class="option option-b">
+      <h2>Option B · Modern Product Dashboard</h2>
+      <p class="intent">A refined SaaS layout with stronger card hierarchy, summary panel, and sharper CTA placement while staying classroom-calm.</p>
+      <div class="viewport-grid">
+        <div>
+          <p class="mockup-title">Desktop · 1440 x 1024</p>
+          <div class="desktop-frame">
+            <div class="header-panel">
+              <div>
+                <h3>My Assignments</h3>
+                <p>Clear daily practice flow for AP CSA students. Choose one card and start immediately.</p>
+              </div>
+              <div class="summary-box">
+                <strong>Today Snapshot</strong><br />
+                3 assigned sets · 1 overdue · 10 MCQ + 3 FRQ + mixed review
+              </div>
+            </div>
+            <div class="assignment-list">
+              <article class="card">
+                <div>
+                  <div style="display:flex;align-items:center;margin-bottom:6px;">
+                    <span class="icon-badge">🧠</span>
+                    <h3 style="margin:0;">Unit 2 MCQ Practice</h3>
+                  </div>
+                  <p class="desc">Loop tracing and condition checks for warm-up practice.</p>
+                  <div class="meta">
+                    <span class="meta-text">Due Jul 03, 2026</span>
+                    <span class="meta-text">Questions 10</span>
+                    <span class="chip type-mcq">MCQ</span>
+                    <span class="chip status-upcoming">Upcoming</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+              <article class="card">
+                <div>
+                  <div style="display:flex;align-items:center;margin-bottom:6px;">
+                    <span class="icon-badge" style="background:#ecfdf5;border-color:#bbf7d0;color:#166534;">⌨</span>
+                    <h3 style="margin:0;">Array FRQ Drill</h3>
+                  </div>
+                  <p class="desc">Practice traversal, aggregation, and return values.</p>
+                  <div class="meta">
+                    <span class="meta-text">No due date</span>
+                    <span class="meta-text">Questions 3</span>
+                    <span class="chip type-frq">FRQ</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+              <article class="card overdue">
+                <div>
+                  <div style="display:flex;align-items:center;margin-bottom:6px;">
+                    <span class="icon-badge" style="background:#fff7ed;border-color:#fed7aa;color:#9a3412;">🔀</span>
+                    <h3 style="margin:0;">Mixed Practice Set A</h3>
+                  </div>
+                  <p class="desc">Review day set with MCQ and FRQ items.</p>
+                  <div class="meta">
+                    <span class="meta-text" style="color:#b91c1c;">Due Yesterday</span>
+                    <span class="meta-text">Questions 6</span>
+                    <span class="chip type-mixed">Mixed</span>
+                    <span class="chip status-overdue">Overdue</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p class="mockup-title">Mobile · 390 x 844</p>
+          <div class="mobile-frame mobile">
+            <div style="background:linear-gradient(135deg,#1e40af,#2563eb);border-radius:14px;padding:14px 14px 12px;color:#fff;margin-bottom:12px;">
+              <h3 style="margin:0;font-size:22px;">My Assignments</h3>
+              <p style="margin:6px 0 0;color:rgba(255,255,255,.9);font-size:13px;">Choose one task and start now.</p>
+            </div>
+            <div class="assignment-list">
+              <article class="card">
+                <div>
+                  <h3 style="font-size:20px;">Unit 2 MCQ Practice</h3>
+                  <p class="desc">Loop tracing and condition checks for warm-up practice.</p>
+                  <div class="meta">
+                    <span class="meta-text">Due Jul 03, 2026</span>
+                    <span class="meta-text">Questions 10</span>
+                    <span class="chip type-mcq">MCQ</span>
+                    <span class="chip status-upcoming">Upcoming</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+              <article class="card">
+                <div>
+                  <h3 style="font-size:20px;">Mixed Practice Set A</h3>
+                  <p class="desc">Review day set with MCQ and FRQ items.</p>
+                  <div class="meta">
+                    <span class="meta-text" style="color:#b91c1c;">Due Yesterday</span>
+                    <span class="meta-text">Questions 6</span>
+                    <span class="chip type-mixed">Mixed</span>
+                    <span class="chip status-overdue">Overdue</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Emphasizes dashboard polish without adding decorative noise or exam-platform mimicry.</p>
+    </section>
+
+    <!-- Option C -->
+    <section class="option option-c">
+      <h2>Option C · Focused Classroom Practice</h2>
+      <p class="intent">Instruction-first layout optimized for in-class clarity, large hierarchy, and immediate student action.</p>
+      <div class="viewport-grid">
+        <div>
+          <p class="mockup-title">Desktop · 1440 x 1024</p>
+          <div class="desktop-frame">
+            <h3 class="title">My Assignments</h3>
+            <p class="subtitle">Complete one assignment at a time.</p>
+            <div class="workflow">What to do next: Select one assignment below and click <strong>Start Practice</strong>.</div>
+            <div class="intro">Use this page during class. Your teacher may ask you to start with the upcoming set first.</div>
+            <div class="assignment-list">
+              <article class="card">
+                <div>
+                  <h3>Unit 2 MCQ Practice</h3>
+                  <p class="desc">Loop tracing and condition checks for warm-up practice.</p>
+                  <div class="meta">
+                    <span class="meta-text">Due Jul 03, 2026</span>
+                    <span class="meta-text">Questions 10</span>
+                    <span class="chip type-mcq">MCQ</span>
+                    <span class="chip status-upcoming">Upcoming</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+              <article class="card">
+                <div>
+                  <h3>Array FRQ Drill</h3>
+                  <p class="desc">Practice traversal, aggregation, and return values.</p>
+                  <div class="meta">
+                    <span class="meta-text">No due date</span>
+                    <span class="meta-text">Questions 3</span>
+                    <span class="chip type-frq">FRQ</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+              <article class="card">
+                <div>
+                  <h3>Mixed Practice Set A</h3>
+                  <p class="desc">Review day set with MCQ and FRQ items.</p>
+                  <div class="meta">
+                    <span class="meta-text" style="color:#b91c1c;">Due Yesterday</span>
+                    <span class="meta-text">Questions 6</span>
+                    <span class="chip type-mixed">Mixed</span>
+                    <span class="chip status-overdue">Overdue</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p class="mockup-title">Mobile · 390 x 844</p>
+          <div class="mobile-frame mobile">
+            <h3 class="title">My Assignments</h3>
+            <p class="subtitle">Tap one card to start.</p>
+            <div class="workflow" style="font-size:13px;margin-bottom:10px;">Step 1: Choose one assignment · Step 2: Tap Start Practice</div>
+            <div class="assignment-list">
+              <article class="card">
+                <div>
+                  <h3 style="font-size:21px;">Unit 2 MCQ Practice</h3>
+                  <p class="desc">Loop tracing and condition checks for warm-up practice.</p>
+                  <div class="meta">
+                    <span class="meta-text">Due Jul 03, 2026</span>
+                    <span class="meta-text">Questions 10</span>
+                    <span class="chip type-mcq">MCQ</span>
+                    <span class="chip status-upcoming">Upcoming</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+              <article class="card">
+                <div>
+                  <h3 style="font-size:21px;">Array FRQ Drill</h3>
+                  <p class="desc">Practice traversal, aggregation, and return values.</p>
+                  <div class="meta">
+                    <span class="meta-text">No due date</span>
+                    <span class="meta-text">Questions 3</span>
+                    <span class="chip type-frq">FRQ</span>
+                  </div>
+                </div>
+                <button class="btn">Start Practice</button>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Designed for fast in-class verbal instruction and immediate click confidence within 5 seconds.</p>
+    </section>
+  </main>
+</body>
+</html>
