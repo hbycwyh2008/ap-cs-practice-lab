@@ -95,6 +95,12 @@ export default function StudentAssignmentDetailPage() {
       <div className="max-w-6xl mx-auto p-6">
         <h1 className="text-2xl font-bold mb-2">{assignment.title}</h1>
         <p className="text-gray-500 mb-6">{assignment.description}</p>
+        <Alert className="mb-6 border-amber-200 bg-amber-50">
+          <AlertDescription>
+            This assignment contains mixed question types. Open each question
+            individually.
+          </AlertDescription>
+        </Alert>
 
         <h2 className="text-lg font-semibold mb-4">Questions</h2>
         <div className="space-y-3">
@@ -110,7 +116,8 @@ export default function StudentAssignmentDetailPage() {
                     {aq.question?.title || `Question #${aq.question_id}`}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    {aq.question?.unit} · {aq.question?.difficulty}
+                    {aq.question?.unit} · {aq.question?.difficulty} ·{" "}
+                    {aq.question?.type === "multiple_choice" ? "MCQ" : "FRQ"}
                   </p>
                 </div>
                 <span className="text-sm text-gray-500">{aq.points} pts</span>
@@ -125,6 +132,7 @@ export default function StudentAssignmentDetailPage() {
   const currentQuestion = orderedQuestions[currentIndex];
   const currentChoices = normalizeChoices(currentQuestion.question);
   const answeredCount = orderedQuestions.filter((aq) => Boolean(answers[aq.question_id])).length;
+  const unansweredCount = orderedQuestions.length - answeredCount;
   const markedCount = orderedQuestions.filter((aq) => markedForReview[aq.question_id]).length;
 
   const selectAnswer = (questionId: number, choiceLabel: string) => {
@@ -143,6 +151,12 @@ export default function StudentAssignmentDetailPage() {
 
   const submitAssignment = async () => {
     if (submitSummary) return;
+    if (unansweredCount > 0) {
+      const shouldSubmit = window.confirm(
+        "You have unanswered questions. Submit anyway?"
+      );
+      if (!shouldSubmit) return;
+    }
     setSubmittingExam(true);
     setExamMessage("");
     const results: ExamQuestionResult[] = [];
@@ -217,10 +231,14 @@ export default function StudentAssignmentDetailPage() {
                 <Badge variant="secondary">Multiple Choice</Badge>
                 <span>Question {currentIndex + 1} of {orderedQuestions.length}</span>
                 <span>·</span>
-                <span>Timer: --:-- (placeholder)</span>
+                <span>Timer not implemented in this mode</span>
               </div>
             </div>
-            <Button onClick={submitAssignment} disabled={submittingExam || !!submitSummary}>
+            <Button
+              onClick={submitAssignment}
+              disabled={submittingExam || !!submitSummary}
+              variant="destructive"
+            >
               {submittingExam ? "Submitting..." : "Submit Assignment"}
             </Button>
           </div>
@@ -266,9 +284,9 @@ export default function StudentAssignmentDetailPage() {
               })}
             </div>
             <div className="text-xs text-muted-foreground space-y-1">
-              <p>Answered: {answeredCount}</p>
-              <p>Unanswered: {orderedQuestions.length - answeredCount}</p>
-              <p>Marked for review: {markedCount}</p>
+              <p>Answered {answeredCount} / {orderedQuestions.length}</p>
+              <p>Marked for review {markedCount}</p>
+              <p>Unanswered {unansweredCount}</p>
             </div>
           </CardContent>
         </Card>
@@ -343,6 +361,7 @@ export default function StudentAssignmentDetailPage() {
                 type="button"
                 onClick={submitAssignment}
                 disabled={submittingExam || Boolean(submitSummary)}
+                variant="destructive"
               >
                 {submittingExam ? "Submitting..." : "Submit Assignment"}
               </Button>
@@ -420,6 +439,11 @@ export default function StudentAssignmentDetailPage() {
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="pt-2">
+              <Button asChild variant="outline">
+                <Link href="/student/assignments">Return to Assignments</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

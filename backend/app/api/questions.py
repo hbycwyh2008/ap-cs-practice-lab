@@ -28,6 +28,13 @@ from app.schemas import (
 router = APIRouter(prefix="/questions", tags=["questions"])
 
 
+def _question_read_for_user(question: Question, current_user: User) -> QuestionRead:
+    question_read = QuestionRead.model_validate(question)
+    if current_user.role == UserRole.STUDENT:
+        return question_read.model_copy(update={"reference_solution": None})
+    return question_read
+
+
 def _normalize_course(value: str) -> Course:
     normalized = value.strip().upper().replace(" ", "_")
     if normalized in {"AP_CSA", "APCSA"}:
@@ -184,13 +191,15 @@ def list_questions(
 ):
     if current_user.role == UserRole.TEACHER:
         stmt = select(Question).where(Question.created_by == current_user.id)
-        return session.exec(stmt.order_by(Question.created_at.desc())).all()
+        questions = session.exec(stmt.order_by(Question.created_at.desc())).all()
+        return [_question_read_for_user(question, current_user) for question in questions]
 
     allowed_ids = _student_assigned_question_ids(session, current_user)
     if not allowed_ids:
         return []
     stmt = select(Question).where(Question.id.in_(allowed_ids))
-    return session.exec(stmt.order_by(Question.created_at.desc())).all()
+    questions = session.exec(stmt.order_by(Question.created_at.desc())).all()
+    return [_question_read_for_user(question, current_user) for question in questions]
 
 
 @router.post("", response_model=QuestionRead)
@@ -353,7 +362,7 @@ def get_question(
         raise HTTPException(status_code=404, detail="Question not found")
     if current_user.role == UserRole.STUDENT:
         _ensure_student_can_access_question(session, current_user, question_id)
-    return question
+    return _question_read_for_user(question, current_user)
 
 
 @router.put("/{question_id}", response_model=QuestionRead)

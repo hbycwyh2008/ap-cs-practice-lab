@@ -46,7 +46,17 @@ def _validate_teacher_questions(
             raise HTTPException(status_code=400, detail="Question is inactive")
 
 
-def _build_assignment_detail(session: Session, assignment: Assignment) -> AssignmentDetail:
+def _question_read_for_user(question: Question, current_user: User) -> QuestionRead:
+    question_read = QuestionRead.model_validate(question)
+    if current_user.role == UserRole.STUDENT:
+        # Never expose teacher reference solutions in student-facing payloads.
+        return question_read.model_copy(update={"reference_solution": None})
+    return question_read
+
+
+def _build_assignment_detail(
+    session: Session, assignment: Assignment, current_user: User
+) -> AssignmentDetail:
     aqs = session.exec(
         select(AssignmentQuestion)
         .where(AssignmentQuestion.assignment_id == assignment.id)
@@ -63,7 +73,7 @@ def _build_assignment_detail(session: Session, assignment: Assignment) -> Assign
                 question_id=aq.question_id,
                 order=aq.order,
                 points=aq.points,
-                question=QuestionRead.model_validate(q) if q else None,
+                question=_question_read_for_user(q, current_user) if q else None,
             )
         )
 
@@ -90,7 +100,34 @@ def list_assignments(
         if not current_user.class_id:
             return []
         stmt = select(Assignment).where(Assignment.class_id == current_user.class_id)
-    return session.exec(stmt.order_by(Assignment.created_at.desc())).all()
+    assignments = session.exec(stmt.order_by(Assignment.created_at.desc())).all()
+    if not assignments:
+        return []
+
+    assignment_ids = [assignment.id for assignment in assignments if assignment.id is not None]
+    counts: dict[int, int] = {assignment_id: 0 for assignment_id in assignment_ids}
+    if assignment_ids:
+        links = session.exec(
+            select(AssignmentQuestion).where(
+                AssignmentQuestion.assignment_id.in_(assignment_ids)
+            )
+        ).all()
+        for link in links:
+            counts[link.assignment_id] = counts.get(link.assignment_id, 0) + 1
+
+    return [
+        AssignmentRead(
+            id=assignment.id,
+            title=assignment.title,
+            description=assignment.description,
+            class_id=assignment.class_id,
+            created_by=assignment.created_by,
+            due_at=assignment.due_at,
+            created_at=assignment.created_at,
+            question_count=counts.get(assignment.id, 0) if assignment.id else 0,
+        )
+        for assignment in assignments
+    ]
 
 
 @router.post("", response_model=AssignmentDetail)
@@ -128,7 +165,7 @@ def create_assignment(
         session.add(aq)
     session.commit()
 
-    return _build_assignment_detail(session, assignment)
+    return _build_assignment_detail(session, assignment, current_user)
 
 
 @router.post("/generate", response_model=AssignmentDetail)
@@ -212,7 +249,7 @@ def generate_assignment(
         session.add(aq)
     session.commit()
 
-    return _build_assignment_detail(session, assignment)
+    return _build_assignment_detail(session, assignment, current_user)
 
 
 @router.get("/{assignment_id}", response_model=AssignmentDetail)
@@ -231,7 +268,7 @@ def get_assignment(
     elif current_user.class_id != assignment.class_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    return _build_assignment_detail(session, assignment)
+    return _build_assignment_detail(session, assignment, current_user)
 
 
 @router.put("/{assignment_id}", response_model=AssignmentDetail)
@@ -274,7 +311,7 @@ def update_assignment(
 
     session.commit()
     session.refresh(assignment)
-    return _build_assignment_detail(session, assignment)
+    return _build_assignment_detail(session, assignment, current_user)
 
 
 @router.delete("/{assignment_id}")

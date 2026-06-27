@@ -17,9 +17,9 @@ import { Badge } from "@/components/ui/badge";
 import {
   FileCheck,
   ArrowRight,
-  CheckCircle2,
   Clock,
   AlertCircle,
+  ListChecks,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
@@ -68,11 +68,8 @@ export default function StudentAssignmentsPage() {
           ) : (
             <div className="space-y-4">
               {assignments.map((a) => {
-                const completed: number = 0;
-                const total: number = 0;
-                const completionRate: number = 0;
                 const isOverdue = a.due_at ? new Date(a.due_at) < new Date() : false;
-                const isComplete = false;
+                const questionCount = a.question_count ?? 0;
 
                 return (
                   <Card
@@ -86,15 +83,9 @@ export default function StudentAssignmentsPage() {
                             <CardTitle className="text-2xl group-hover:text-blue-600 transition-colors">
                               {a.title}
                             </CardTitle>
-                            {isComplete && (
-                              <Badge className="bg-green-600">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Complete
-                              </Badge>
-                            )}
                           </div>
                           <CardDescription className="text-base">
-                            {a.description || "Click to view questions and start practicing"}
+                            {a.description || "Open assignment to view questions."}
                           </CardDescription>
                         </div>
                       </div>
@@ -103,15 +94,19 @@ export default function StudentAssignmentsPage() {
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-6">
                           <div className="flex items-center gap-2">
-                            {isComplete ? (
-                              <CheckCircle2 className="w-5 h-5 text-green-600" />
-                            ) : isOverdue ? (
+                            {isOverdue ? (
                               <AlertCircle className="w-5 h-5 text-red-600" />
                             ) : (
                               <Clock className="w-5 h-5 text-amber-600" />
                             )}
                             <span className="text-lg font-semibold text-slate-700">
-                              {completed}/{total} completed
+                              {a.due_at ? "Due date set" : "No due date"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-slate-700">
+                            <ListChecks className="w-5 h-5 text-blue-600" />
+                            <span className="text-lg font-semibold">
+                              {questionCount} question{questionCount === 1 ? "" : "s"}
                             </span>
                           </div>
                           <Badge
@@ -123,25 +118,11 @@ export default function StudentAssignmentsPage() {
                         </div>
                         <Button asChild className="w-full sm:w-auto group">
                           <Link href={`/student/assignments/${a.id}`}>
-                            {isComplete ? "Review" : "Start Practice"}
+                            Start Practice
                             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                           </Link>
                         </Button>
                       </div>
-                      {total > 0 && (
-                        <div className="mt-4">
-                          <div className="w-full bg-slate-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full transition-all ${
-                                completionRate === 100
-                                  ? "bg-green-600"
-                                  : "bg-blue-600"
-                              }`}
-                              style={{ width: `${completionRate}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 );

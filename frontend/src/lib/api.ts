@@ -173,6 +173,7 @@ export interface Assignment {
   created_by: number;
   due_at: string | null;
   created_at: string;
+  question_count: number;
 }
 
 export interface AssignmentQuestion {

@@ -601,6 +601,7 @@ class AssignmentRead(BaseModel):
     created_by: int
     due_at: Optional[datetime]
     created_at: datetime
+    question_count: int = 0
 
     class Config:
         from_attributes = True
